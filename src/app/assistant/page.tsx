@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Conversation = { id: number; title: string }
@@ -59,6 +59,30 @@ export default function AssistantPage() {
     }
   }
 
+  async function renameChat(id: number) {
+    const current = conversations.find((c) => c.id === id)
+    const title = window.prompt('Rename chat', current?.title ?? '')
+    if (title === null || !title.trim()) return
+    await supabase.from('conversations').update({ title }).eq('id', id)
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title } : c))
+    )
+  }
+
+  async function deleteChat(id: number) {
+    if (!window.confirm('Delete this chat? This cannot be undone.')) return
+    await supabase.from('conversations').delete().eq('id', id)
+    const remaining = conversations.filter((c) => c.id !== id)
+    setConversations(remaining)
+    if (activeId === id) {
+      if (remaining.length > 0) {
+        selectChat(remaining[0].id)
+      } else {
+        await newChat()
+      }
+    }
+  }
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
@@ -108,16 +132,34 @@ export default function AssistantPage() {
           New chat
         </button>
         <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
-          {conversations.map((c) => (
-            <button
+        {conversations.map((c) => (
+            <div
               key={c.id}
-              onClick={() => selectChat(c.id)}
-              className={`block w-full truncate rounded-lg px-3 py-2 text-left text-sm ${
+              className={`group flex items-center gap-1 rounded-lg pr-1 text-sm ${
                 c.id === activeId ? 'bg-neutral-200' : 'hover:bg-neutral-100'
               }`}
             >
-              {c.title}
-            </button>
+              <button
+                onClick={() => selectChat(c.id)}
+                className="flex-1 truncate px-3 py-2 text-left"
+              >
+                {c.title}
+              </button>
+              <button
+                onClick={() => renameChat(c.id)}
+                className="hidden rounded p-1 text-neutral-400 hover:text-neutral-700 group-hover:block"
+                title="Rename"
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                onClick={() => deleteChat(c.id)}
+                className="hidden rounded p-1 text-neutral-400 hover:text-red-600 group-hover:block"
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           ))}
         </div>
       </div>
