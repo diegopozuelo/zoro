@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import MiniRingsCard from '@/components/MiniRingsCard'
+import Link from 'next/link'
 
 const GOALS = { work: 5, sleep: 8, exercise: 45, reading: 20 }
 
@@ -29,6 +30,14 @@ export default async function TodayPage() {
     counts[s] = (counts[s] || 0) + 1
   })
   const statusEntries = Object.entries(counts).sort((a, b) => b[1] - a[1])
+
+  // Today's plan
+  const todayStr = ymd(new Date())
+  const { data: planItems } = await supabase
+    .from('plan_items')
+    .select('*')
+    .eq('entry_date', todayStr)
+    .order('sort_order', { ascending: true })
 
   // Yesterday's life data
   const y = new Date()
@@ -83,6 +92,22 @@ export default async function TodayPage() {
       <h1 className="text-2xl font-semibold">Today</h1>
       <p className="mt-1 text-neutral-500">{today}</p>
 
+      {/* Today's plan */}
+      {planItems && planItems.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-sm font-medium text-neutral-500">Your plan for today</h2>
+          <div className="mt-3 space-y-1.5">
+            {planItems.map((it) => (
+              <div key={it.id} className="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-2.5">
+                <span className="w-28 shrink-0 text-xs text-neutral-500">
+                  {it.start_time} to {it.end_time}
+                </span>
+                <span className="flex-1 text-sm">{it.content}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       {/* Yesterday recap */}
       <section className="mt-6 flex items-center gap-6 rounded-2xl border border-neutral-200 p-6">
         <MiniRingsCard work={yWork} sleep={ySleep} exercise={yExercise} reading={yReading} />
