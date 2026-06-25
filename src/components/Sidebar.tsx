@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, User, KanbanSquare, MessageSquare,
-  Send, CalendarCheck, NotebookPen, Lightbulb,
+  Send, CalendarCheck, NotebookPen, Lightbulb, Activity,
 } from 'lucide-react'
 
 const nav = [
@@ -15,6 +15,7 @@ const nav = [
   { href: '/planner', label: 'Planner', icon: CalendarCheck },
   { href: '/journal', label: 'Journal', icon: NotebookPen },
   { href: '/brainstorm', label: 'Brainstorm', icon: Lightbulb },
+  { href: '/life', label: 'Life', icon: Activity },
 ]
 
 export default function Sidebar() {
