@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import MiniRingsCard from '@/components/MiniRingsCard'
+import TodayPlan from '@/components/TodayPlan'
+import TodayPriorities from '@/components/TodayPriorities'
 import Link from 'next/link'
 
 const GOALS = { work: 5, sleep: 8, exercise: 45, reading: 20 }
@@ -85,31 +87,49 @@ export default async function TodayPage() {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   })
 
+  // This week stats
+  function startOfWeek(d: Date) {
+    const x = new Date(d)
+    const dow = x.getDay()
+    const back = (dow + 6) % 7
+    x.setDate(x.getDate() - back)
+    return x
+  }
+  const weekStart = ymd(startOfWeek(new Date()))
+  const appsThisWeek = (rows ?? []).filter(
+    (r) => r.date_applied && r.date_applied >= weekStart
+  ).length
+  const interviewsActive = counts['Interview'] ?? 0
+
+  const { data: lifeAll } = await supabase.from('life_days').select('entry_date')
+  const loggedDays = new Set((lifeAll ?? []).map((r) => r.entry_date))
+  let streak = 0
+  const cur = new Date()
+  if (!loggedDays.has(ymd(cur))) cur.setDate(cur.getDate() - 1)
+  while (loggedDays.has(ymd(cur))) {
+    streak++
+    cur.setDate(cur.getDate() - 1)
+  }
+
+  const { data: priorityRows } = await supabase
+    .from('priorities')
+    .select('id, slot, content, done')
+    .eq('entry_date', todayStr)
+    .order('slot', { ascending: true })
+
   const recent = rows?.slice(0, 5) ?? []
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-2xl font-semibold">Today</h1>
-      <p className="mt-1 text-neutral-500">{today}</p>
+      <h1 className="font-display text-5xl">Today</h1>
+      <p className="mt-1 font-display text-xl text-[var(--ink-soft)]">{today}</p>
 
       {/* Today's plan */}
       {planItems && planItems.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-sm font-medium text-neutral-500">Your plan for today</h2>
-          <div className="mt-3 space-y-1.5">
-            {planItems.map((it) => (
-              <div key={it.id} className="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-2.5">
-                <span className="w-28 shrink-0 text-xs text-neutral-500">
-                  {it.start_time} to {it.end_time}
-                </span>
-                <span className="flex-1 text-sm">{it.content}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        <TodayPlan initialItems={planItems} entryDate={todayStr} />
       )}
       {/* Yesterday recap */}
-      <section className="mt-6 flex items-center gap-6 rounded-2xl border border-neutral-200 p-6">
+      <section className="card mt-8 flex items-center gap-6 p-6">
         <MiniRingsCard work={yWork} sleep={ySleep} exercise={yExercise} reading={yReading} />
         <div>
           <p className="text-sm font-medium text-neutral-500">Yesterday</p>
@@ -118,16 +138,16 @@ export default async function TodayPage() {
       </section>
 
       {/* Pipeline stats */}
-      <section className="mt-8">
+      <section className="mt-10">
         <div className="flex items-baseline gap-3">
-          <span className="text-4xl font-semibold">{total}</span>
-          <span className="text-neutral-500">applications tracked</span>
+          <span className="font-display text-6xl">{total}</span>
+          <span className="text-[var(--ink-soft)]">applications tracked</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {statusEntries.map(([status, count]) => (
             <span
               key={status}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+              className={`rounded-full px-3 py-1 text-sm font-medium ${
                 statusColors[status] ?? 'bg-neutral-100 text-neutral-600'
               }`}
             >
@@ -137,29 +157,39 @@ export default async function TodayPage() {
         </div>
       </section>
 
-      {/* Priorities */}
+      {/* This week */}
       <section className="mt-10">
-        <h2 className="text-sm font-medium text-neutral-500">Top 3 priorities</h2>
-        <div className="mt-3 space-y-2">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="rounded-lg border border-neutral-200 px-4 py-3 text-neutral-400">
-              Priority {n}
-            </div>
-          ))}
+        <h2 className="eyebrow">This week</h2>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className="card px-5 py-4">
+            <div className="font-display text-4xl">{appsThisWeek}</div>
+            <div className="mt-1 text-xs text-[var(--ink-soft)]">Applications</div>
+          </div>
+          <div className="card px-5 py-4">
+            <div className="font-display text-4xl">{interviewsActive}</div>
+            <div className="mt-1 text-xs text-[var(--ink-soft)]">Interviews active</div>
+          </div>
+          <div className="card px-5 py-4">
+            <div className="font-display text-4xl">{streak}</div>
+            <div className="mt-1 text-xs text-[var(--ink-soft)]">Day logging streak</div>
+          </div>
         </div>
       </section>
 
+      {/* Priorities */}
+      <TodayPriorities initial={priorityRows ?? []} entryDate={todayStr} />
+
       {/* Recent activity */}
       <section className="mt-10">
-        <h2 className="text-sm font-medium text-neutral-500">Recent activity</h2>
-        <div className="mt-3 overflow-hidden rounded-lg border border-neutral-200">
+        <h2 className="eyebrow">Recent activity</h2>
+        <div className="card mt-3 overflow-hidden">
           {recent.map((r) => (
-            <div key={r.id} className="flex items-center justify-between border-b border-neutral-100 px-4 py-3 last:border-b-0">
+            <div key={r.id} className="flex items-center justify-between border-b border-[var(--line)] px-5 py-3.5 last:border-b-0">
               <div>
                 <p className="font-medium">{r.company}</p>
-                <p className="text-sm text-neutral-500">{r.role_title}</p>
+                <p className="text-sm text-[var(--ink-soft)]">{r.role_title}</p>
               </div>
-              <span className="text-sm text-neutral-500">{r.status}</span>
+              <span className="text-sm text-[var(--ink-soft)]">{r.status}</span>
             </div>
           ))}
         </div>

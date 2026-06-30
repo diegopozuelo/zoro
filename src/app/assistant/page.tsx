@@ -14,19 +14,25 @@ export default function AssistantPage() {
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Load conversation list on open
+  // Load conversation list on open, honoring ?chat=ID from the planner handoff
   useEffect(() => {
-    loadConversations()
+    const params = new URLSearchParams(window.location.search)
+    const chatParam = params.get('chat')
+    loadConversations(chatParam ? Number(chatParam) : null)
   }, [])
 
-  async function loadConversations() {
+  async function loadConversations(preferredId: number | null = null) {
     const { data } = await supabase
       .from('conversations')
       .select('id, title')
       .order('created_at', { ascending: false })
     if (data && data.length > 0) {
       setConversations(data)
-      if (activeId === null) selectChat(data[0].id)
+      if (preferredId && data.some((c) => c.id === preferredId)) {
+        selectChat(preferredId)
+      } else if (activeId === null) {
+        selectChat(data[0].id)
+      }
     } else {
       await newChat()
     }
@@ -98,7 +104,6 @@ export default function AssistantPage() {
 
     await supabase.from('messages').insert({ ...userMsg, conversation_id: activeId })
 
-    // Title the chat from the first message
     if (isFirst) {
       const title = userMsg.content.slice(0, 40)
       await supabase.from('conversations').update({ title }).eq('id', activeId)
@@ -132,7 +137,7 @@ export default function AssistantPage() {
           New chat
         </button>
         <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
-        {conversations.map((c) => (
+          {conversations.map((c) => (
             <div
               key={c.id}
               className={`group flex items-center gap-1 rounded-lg pr-1 text-sm ${

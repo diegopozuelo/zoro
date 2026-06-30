@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, ChevronRight, Trash2, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Sparkles, Play, Circle, CheckCircle2 } from 'lucide-react'
 
 function ymd(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -15,6 +16,7 @@ type PlanItem = {
   category: string
   done?: boolean
   sort_order?: number
+  conversation_id?: number | null
 }
 
 const catColor: Record<string, string> = {
@@ -28,6 +30,7 @@ const catColor: Record<string, string> = {
 }
 
 export default function Planner() {
+  const router = useRouter()
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
   const [selected, setSelected] = useState(ymd(tomorrow))
@@ -35,6 +38,7 @@ export default function Planner() {
   const [items, setItems] = useState<PlanItem[]>([])
   const [status, setStatus] = useState('draft')
   const [generating, setGenerating] = useState(false)
+  const [starting, setStarting] = useState<number | null>(null)
 
   useEffect(() => {
     load()
@@ -61,7 +65,6 @@ export default function Planner() {
     if (!brainDump.trim() || generating) return
     setGenerating(true)
 
-    // save the brain-dump
     await supabase
       .from('plan_meta')
       .upsert({ entry_date: selected, brain_dump: brainDump, status: 'draft' }, { onConflict: 'entry_date' })
@@ -86,8 +89,41 @@ export default function Planner() {
     setItems((prev) => prev.filter((_, i) => i !== index))
   }
 
+  async function toggleDone(index: number) {
+    const it = items[index]
+    const next = !it.done
+    setItems((prev) => prev.map((x, i) => (i === index ? { ...x, done: next } : x)))
+    if (it.id) await supabase.from('plan_items').update({ done: next }).eq('id', it.id)
+  }
+
+  async function startWorking(index: number) {
+    const it = items[index]
+    if (!it.id) return
+    if (it.conversation_id) {
+      router.push('/assistant?chat=' + it.conversation_id)
+      return
+    }
+    setStarting(it.id)
+    const res = await fetch('/api/start-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        taskId: it.id,
+        content: it.content,
+        start_time: it.start_time,
+        end_time: it.end_time,
+        category: it.category,
+      }),
+    })
+    const data = await res.json()
+    setStarting(null)
+    if (data.conversationId) {
+      setItems((prev) => prev.map((x, i) => (i === index ? { ...x, conversation_id: data.conversationId } : x)))
+      router.push('/assistant?chat=' + data.conversationId)
+    }
+  }
+
   async function approve() {
-    // wipe existing items for the day, then insert the current set
     await supabase.from('plan_items').delete().eq('entry_date', selected)
     const toInsert = items.map((it, i) => ({
       entry_date: selected,
@@ -170,7 +206,21 @@ export default function Planner() {
           </div>
           <div className="mt-3 space-y-2">
             {items.map((it, i) => (
-              <div key={i} className="group flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-3">
+              <div
+                key={it.id ?? i}
+                className={`group flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                  it.done ? 'border-neutral-100 bg-neutral-50' : 'border-neutral-200'
+                }`}
+              >
+                {it.id && (
+                  <button
+                    onClick={() => toggleDone(i)}
+                    className="shrink-0 text-neutral-400 hover:text-green-600"
+                    title={it.done ? 'Mark not done' : 'Mark done'}
+                  >
+                    {it.done ? <CheckCircle2 size={18} className="text-green-600" /> : <Circle size={18} />}
+                  </button>
+                )}
                 <div className="flex w-32 shrink-0 items-center gap-1 text-xs text-neutral-500">
                   <input
                     value={it.start_time}
@@ -187,14 +237,26 @@ export default function Planner() {
                 <input
                   value={it.content}
                   onChange={(e) => updateItem(i, 'content', e.target.value)}
-                  className="flex-1 bg-transparent text-sm outline-none"
+                  className={`flex-1 bg-transparent text-sm outline-none ${
+                    it.done ? 'text-neutral-400 line-through' : ''
+                  }`}
                 />
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${catColor[it.category] ?? 'bg-neutral-100 text-neutral-600'}`}>
                   {it.category}
                 </span>
+                {it.id && (
+                  <button
+                    onClick={() => startWorking(i)}
+                    disabled={starting === it.id}
+                    className="flex shrink-0 items-center gap-1 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs text-white hover:bg-neutral-700 disabled:opacity-50"
+                  >
+                    <Play size={12} />
+                    {starting === it.id ? 'Starting...' : it.conversation_id ? 'Resume' : 'Start working'}
+                  </button>
+                )}
                 <button
                   onClick={() => removeItem(i)}
-                  className="hidden text-neutral-400 hover:text-red-600 group-hover:block"
+                  className="hidden shrink-0 text-neutral-400 hover:text-red-600 group-hover:block"
                 >
                   <Trash2 size={14} />
                 </button>
