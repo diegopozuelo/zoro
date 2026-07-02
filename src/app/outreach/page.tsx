@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Trash2, Mail, ArrowLeft, ImagePlus, X, CheckCircle2 } from 'lucide-react'
+import { Plus, Trash2, Mail, ArrowLeft, ImagePlus, X, CheckCircle2, Clock } from 'lucide-react'
 
 type Lead = {
   id: number
@@ -13,6 +13,7 @@ type Lead = {
   job_url: string | null
   status: string
   conversation_id: number | null
+  last_outreach_at: string | null
 }
 
 const STATUSES = ['Watchlist', 'Researching', 'Messaged', 'Replied', 'Archived']
@@ -48,6 +49,25 @@ export default function OutreachPage() {
     }
     reader.readAsDataURL(file)
     e.target.value = ''
+  }
+
+  async function logOutreachEvent(leadId: number, actionType: string, note?: string) {
+    const now = new Date().toISOString()
+    await supabase.from('outreach_events').insert({
+      lead_id: leadId,
+      action_type: actionType,
+      note: note ?? null,
+    })
+    await supabase.from('leads').update({ last_outreach_at: now }).eq('id', leadId)
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, last_outreach_at: now } : l)))
+  }
+
+  async function logAndSetMessaged(lead: Lead) {
+    await logOutreachEvent(lead.id, 'messaged')
+    // Only advance status if it is behind; never override Replied or Archived
+    if (lead.status === 'Watchlist' || lead.status === 'Researching') {
+      await updateLead(lead.id, { status: 'Messaged' })
+    }
   }
 
   async function graduateToPipeline(lead: Lead) {
@@ -225,7 +245,11 @@ export default function OutreachPage() {
             </button>
             <select
               value={openLead.status}
-              onChange={(e) => updateLead(openLead.id, { status: e.target.value })}
+              onChange={(e) => {
+                const newStatus = e.target.value
+                updateLead(openLead.id, { status: newStatus })
+                if (newStatus === 'Messaged') logOutreachEvent(openLead.id, 'messaged')
+              }}
               className={`rounded-full px-3 py-1.5 text-sm font-medium outline-none ${statusColor[openLead.status]}`}
             >
               {STATUSES.map((s) => (
@@ -284,6 +308,35 @@ export default function OutreachPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Log actions */}
+        <div className="mt-4 flex items-center gap-2">
+          <span className="eyebrow mr-1">Log</span>
+          <button
+            onClick={() => logOutreachEvent(openLead.id, 'researched')}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            Researched
+          </button>
+          <button
+            onClick={() => logAndSetMessaged(openLead)}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            Messaged
+          </button>
+          <button
+            onClick={() => logOutreachEvent(openLead.id, 'followed up')}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            Followed up
+          </button>
+          {openLead.last_outreach_at && (
+            <span className="ml-2 flex items-center gap-1 text-xs text-[var(--ink-faint)]">
+              <Clock size={12} />
+              Last touch {new Date(openLead.last_outreach_at).toLocaleDateString()}
+            </span>
+          )}
         </div>
 
         {/* Outreach chat */}

@@ -117,6 +117,30 @@ export default async function TodayPage() {
     .eq('entry_date', todayStr)
     .order('slot', { ascending: true })
 
+  // Outreach stats
+  const { data: allEvents } = await supabase
+    .from('outreach_events')
+    .select('action_type, created_at')
+
+  const todayMidnight = new Date()
+  todayMidnight.setHours(0, 0, 0, 0)
+  const msgToday = (allEvents ?? []).filter(
+    (e) => e.action_type === 'messaged' && new Date(e.created_at) >= todayMidnight
+  ).length
+  const msgWeek = (allEvents ?? []).filter(
+    (e) => e.action_type === 'messaged' && e.created_at.slice(0, 10) >= weekStart
+  ).length
+  const msgTotal = (allEvents ?? []).filter((e) => e.action_type === 'messaged').length
+  // Lead status breakdown
+  const { data: allLeads } = await supabase.from('leads').select('status')
+  const leadCounts: Record<string, number> = {}
+  ;(allLeads ?? []).forEach((l) => {
+    const s = l.status || 'Watchlist'
+    leadCounts[s] = (leadCounts[s] || 0) + 1
+  })
+  const leadTotal = allLeads?.length ?? 0
+  const LEAD_STATUSES = ['Watchlist', 'Researching', 'Messaged', 'Replied', 'Archived']
+
   const recent = rows?.slice(0, 5) ?? []
 
   return (
@@ -129,11 +153,75 @@ export default async function TodayPage() {
         <TodayPlan initialItems={planItems} entryDate={todayStr} />
       )}
       {/* Yesterday recap */}
-      <section className="card mt-8 flex items-center gap-6 p-6">
-        <MiniRingsCard work={yWork} sleep={ySleep} exercise={yExercise} reading={yReading} />
-        <div>
-          <p className="text-sm font-medium text-neutral-500">Yesterday</p>
-          <p className="mt-1 text-neutral-800">{summary}</p>
+      <section className="mt-8">
+        <h2 className="eyebrow">Yesterday</h2>
+        <div className="card mt-3 flex flex-col gap-10 p-10 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-8 sm:w-1/2">
+            <MiniRingsCard work={yWork} sleep={ySleep} exercise={yExercise} reading={yReading} />
+            <div>
+              <p className="font-display text-4xl leading-tight">
+                {goalsHit} of 4 goals
+              </p>
+              <p className="mt-1 text-sm text-[var(--ink-soft)]">{summary}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:w-1/2">
+            {[
+              { label: 'Work', value: yWork, goal: GOALS.work, unit: 'h' },
+              { label: 'Sleep', value: ySleep, goal: GOALS.sleep, unit: 'h' },
+              { label: 'Exercise', value: yExercise, goal: GOALS.exercise, unit: 'm' },
+              { label: 'Reading', value: yReading, goal: GOALS.reading, unit: 'm' },
+            ].map((m) => {
+              const hit = m.value >= m.goal
+              return (
+                <div key={m.label} className="flex items-center gap-2">
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${hit ? 'bg-green-500' : 'bg-neutral-300'}`}
+                  />
+                  <div>
+                    <div className="text-xs text-[var(--ink-faint)]">{m.label}</div>
+                    <div className="text-sm font-medium">
+                      {m.value}{m.unit} <span className="text-[var(--ink-faint)]">/ {m.goal}{m.unit}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Outreach, the main daily metric */}
+      <section className="mt-8">
+        <div className="flex items-baseline gap-3">
+          <span className="font-display text-6xl">{leadTotal}</span>
+          <span className="text-[var(--ink-soft)]">companies in outreach</span>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {LEAD_STATUSES.map((status) => (
+            <span
+              key={status}
+              className={`rounded-full px-3 py-1 text-sm font-medium ${
+                statusColors[status] ?? 'bg-neutral-100 text-neutral-600'
+              }`}
+            >
+              {status}: {leadCounts[status] ?? 0}
+            </span>
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="card px-5 py-4">
+            <div className="font-display text-4xl">{msgToday}</div>
+            <div className="mt-1 text-xs text-[var(--ink-soft)]">Messaged today</div>
+          </div>
+          <div className="card px-5 py-4">
+            <div className="font-display text-4xl">{msgWeek}</div>
+            <div className="mt-1 text-xs text-[var(--ink-soft)]">Messaged this week</div>
+          </div>
+          <div className="card px-5 py-4">
+            <div className="font-display text-4xl">{msgTotal}</div>
+            <div className="mt-1 text-xs text-[var(--ink-soft)]">Total messaged</div>
+          </div>
         </div>
       </section>
 
