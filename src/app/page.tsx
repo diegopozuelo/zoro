@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import MiniRingsCard from '@/components/MiniRingsCard'
 import TodayPlan from '@/components/TodayPlan'
 import TodayPriorities from '@/components/TodayPriorities'
+import TodayNotes from '@/components/TodayNotes'
 import Link from 'next/link'
 
 const GOALS = { work: 5, sleep: 8, exercise: 45, reading: 20 }
@@ -141,6 +142,29 @@ export default async function TodayPage() {
   const leadTotal = allLeads?.length ?? 0
   const LEAD_STATUSES = ['Watchlist', 'Researching', 'Messaged', 'Replied', 'Archived']
 
+  // Focus notes: all open notes, ranked so urgent ones lead, rest backfill
+  const { data: focusRaw } = await supabase
+    .from('notes')
+    .select('*')
+    .eq('done', false)
+  // rank: overdue (0) -> due today (1) -> High priority (2) -> Medium (3) -> rest (4)
+  function rank(n: { due_date: string | null; priority: string }) {
+    if (n.due_date && n.due_date < todayStr) return 0
+    if (n.due_date === todayStr) return 1
+    if (n.priority === 'High') return 2
+    if (n.priority === 'Medium') return 3
+    return 4
+  }
+  const focusNotes = [...(focusRaw ?? [])].sort((a, b) => {
+    const r = rank(a) - rank(b)
+    if (r !== 0) return r
+    // tiebreak: sooner due dates first, dated before undated
+    if (a.due_date && b.due_date) return a.due_date < b.due_date ? -1 : 1
+    if (a.due_date) return -1
+    if (b.due_date) return 1
+    return 0
+  })
+
   const recent = rows?.slice(0, 5) ?? []
 
   return (
@@ -152,6 +176,10 @@ export default async function TodayPage() {
       {planItems && planItems.length > 0 && (
         <TodayPlan initialItems={planItems} entryDate={todayStr} />
       )}
+
+      {/* Focus notes */}
+      <TodayNotes initial={focusNotes} today={todayStr} />
+
       {/* Yesterday recap */}
       <section className="mt-8">
         <h2 className="eyebrow">Yesterday</h2>

@@ -3,11 +3,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, User, KanbanSquare, MessageSquare,
-  Send, CalendarCheck, NotebookPen, Lightbulb, Activity,
+  Send, CalendarCheck, NotebookPen, Lightbulb, Activity, StickyNote,
 } from 'lucide-react'
 
 const nav = [
   { href: '/', label: 'Today', icon: LayoutDashboard },
+  { href: '/notes', label: 'Notes', icon: StickyNote },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { href: '/assistant', label: 'Assistant', icon: MessageSquare },
