@@ -31,12 +31,64 @@ const blank: Omit<Row, 'id'> = {
   status: 'Applied', date_applied: '', job_url: '', notes: '',
 }
 
+const MONTHS: Record<string, string> = {
+  jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+  jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
+}
+
+// Parse "Applied Jul 9" -> { status: 'Applied', date: '2026-07-09' }
+function parseStatusDate(raw: string): { status: string; date: string | null } {
+  const parts = raw.trim().split(/\s+/)
+  const status = parts[0] || 'Applied'
+  const rest = parts.slice(1).join(' ').toLowerCase()
+  const m = rest.match(/([a-z]{3})[a-z]*\s+(\d{1,2})/)
+  if (m && MONTHS[m[1]]) {
+    const year = new Date().getFullYear()
+    const day = m[2].padStart(2, '0')
+    return { status, date: `${year}-${MONTHS[m[1]]}-${day}` }
+  }
+  return { status, date: null }
+}
+
 export default function PipelineTable({ initial }: { initial: Row[] }) {
   const [rows, setRows] = useState<Row[]>(initial)
   const [editing, setEditing] = useState<Row | null>(null)
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState<Omit<Row, 'id'>>(blank)
   const [query, setQuery] = useState('')
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkSaving, setBulkSaving] = useState(false)
+
+  async function addBulk() {
+    if (!bulkText.trim() || bulkSaving) return
+    setBulkSaving(true)
+    const today = new Date().toISOString().slice(0, 10)
+    // Format per line: Company | Role | Location | URL | Applied Jul 9
+    const payloads = bulkText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [company, role, location, url, statusDate] = line.split('|').map((s) => s?.trim() ?? '')
+        const parsed = statusDate ? parseStatusDate(statusDate) : { status: 'Applied', date: null }
+        return {
+          company: company || 'Untitled',
+          role_title: role || '',
+          role_type: '',
+          city: location || '',
+          status: parsed.status || 'Applied',
+          date_applied: parsed.date || today,
+          job_url: url || '',
+          notes: '',
+        }
+      })
+    const { data } = await supabase.from('pipeline').insert(payloads).select()
+    if (data) setRows((prev) => [...(data as Row[]), ...prev])
+    setBulkText('')
+    setBulkOpen(false)
+    setBulkSaving(false)
+  }
 
   function openAdd() {
     setForm(blank)
@@ -87,6 +139,12 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
           className="flex-1 rounded-lg border border-neutral-300 px-4 py-2 text-sm"
         />
         <button
+          onClick={() => setBulkOpen((v) => !v)}
+          className="whitespace-nowrap rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+        >
+          Paste list
+        </button>
+        <button
           onClick={openAdd}
           className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700"
         >
@@ -94,6 +152,39 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
           Add application
         </button>
       </div>
+
+      {bulkOpen && (
+        <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+          <label className="text-xs font-medium text-neutral-600">
+            Paste applications, one per line
+          </label>
+          <p className="mt-1 text-xs text-neutral-500">
+            Format: Company | Role | Location | URL | Status Date. Example: NumeralHQ | Solutions Engineer | Remote (US) | wellfound.com/... | Applied Jul 9
+          </p>
+          <textarea
+            rows={6}
+            value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            placeholder={'NumeralHQ | Solutions Engineer | Remote (US) | wellfound.com/company/numeralhq-1/jobs | Applied Jul 9'}
+            className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 font-mono text-xs"
+          />
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={addBulk}
+              disabled={bulkSaving}
+              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
+            >
+              {bulkSaving ? 'Adding...' : 'Add all'}
+            </button>
+            <button
+              onClick={() => setBulkOpen(false)}
+              className="rounded-lg px-3 py-2 text-sm text-neutral-500 hover:text-neutral-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-neutral-200">
         <table className="w-full text-sm">
