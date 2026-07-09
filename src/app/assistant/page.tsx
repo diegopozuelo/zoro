@@ -195,7 +195,11 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4">
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      <div className="mb-6">
+        <h1 className="font-display text-4xl">Hello Mr. Pozuelo, how can I assist you today?</h1>
+      </div>
+      <div className="flex flex-1 gap-4 overflow-hidden">
       {/* Chat list */}
       <div className="flex w-56 shrink-0 flex-col border-r border-neutral-200 pr-3">
         <button
@@ -304,7 +308,8 @@ export default function AssistantPage() {
               Send
             </button>
           </div>
-        </div>
+          </div>
+      </div>
       </div>
     </div>
   )
