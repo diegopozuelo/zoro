@@ -3,6 +3,7 @@ import MiniRingsCard from '@/components/MiniRingsCard'
 import TodayPlan from '@/components/TodayPlan'
 import TodayPriorities from '@/components/TodayPriorities'
 import TodayNotes from '@/components/TodayNotes'
+import DaySummary from '@/components/DaySummary'
 import Link from 'next/link'
 
 const GOALS = { work: 5, sleep: 8, exercise: 45, reading: 20 }
@@ -309,7 +310,9 @@ export default async function TodayPage() {
             </div>
           ))}
         </div>
-      </section>
-    </div>
-  )
+        </section>
+
+<DaySummary date={todayStr} />
+</div>
+)
 }

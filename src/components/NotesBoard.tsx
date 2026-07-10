@@ -78,7 +78,7 @@ export default function NotesBoard() {
   async function toggleDone(note: Note) {
     // marking done removes it from the active board
     setNotes((prev) => prev.filter((n) => n.id !== note.id))
-    await supabase.from('notes').update({ done: true }).eq('id', note.id)
+    await supabase.from('notes').update({ done: true, completed_at: new Date().toISOString() }).eq('id', note.id)
   }
 
   async function deleteNote(id: number) {

@@ -31,9 +31,9 @@ export default function TodayNotes({ initial, today }: { initial: Note[]; today:
     const [adding, setAdding] = useState(false)
   
     async function markDone(note: Note) {
-      setNotes((prev) => prev.filter((n) => n.id !== note.id))
-      await supabase.from('notes').update({ done: true }).eq('id', note.id)
-    }
+        setNotes((prev) => prev.filter((n) => n.id !== note.id))
+        await supabase.from('notes').update({ done: true, completed_at: new Date().toISOString() }).eq('id', note.id)
+      }
   
     async function quickAdd() {
         if (!quickText.trim() || adding) return

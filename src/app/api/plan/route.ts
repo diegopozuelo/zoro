@@ -19,6 +19,24 @@ export async function POST(req: NextRequest) {
     counts[s] = (counts[s] || 0) + 1
   })
 
+  // Open notes that are due by the target date or high priority
+  const { data: allNotes } = await supabase
+    .from('notes')
+    .select('title, description, type, priority, due_date')
+    .eq('done', false)
+  const relevantNotes = (allNotes ?? []).filter(
+    (n) => (n.due_date && n.due_date <= targetDate) || n.priority === 'High'
+  )
+  const notesBlock =
+    relevantNotes.length > 0
+      ? relevantNotes
+          .map(
+            (n) =>
+              `- [${n.type}, ${n.priority}${n.due_date ? `, due ${n.due_date}` : ''}] ${n.title}${n.description ? `: ${n.description}` : ''}`
+          )
+          .join('\n')
+      : 'None.'
+
   const systemPrompt = `You are Zoro, Diego's personal planning assistant. You build his daily plan so he wakes up and just executes without overthinking.
 
 WHO DIEGO IS AND HOW HE WORKS:
@@ -34,9 +52,12 @@ CRITICAL RULES FOR BUILDING HIS DAY:
 - Keep it realistic, do not overpack the day.
 - Categories to use: ramp-up, applications, outreach, deep-work, learning, admin, wind-down.
 
+HIS DUE TASKS AND REMINDERS FOR THIS DAY (weave these into the plan as real blocks, do not ignore them):
+${notesBlock}
+Place these intelligently by their nature: deep or important tasks in the 11 to 5 window, admin and reminders in lighter slots, quick errands where they fit. If a task is a reminder like calling someone, give it a short realistic block. Honor his brain-dump first, then fit these due tasks around it so nothing important gets missed.
+
 Return ONLY valid JSON, no markdown, no preamble. An array of plan items in this exact shape:
 [{"start_time":"8:30 AM","end_time":"9:10 AM","content":"Read science and tech news","category":"ramp-up"}]`
-
   const userPrompt = `Build my plan for ${targetDate}. Here is my brain-dump of what I want to get done:
 
 ${brainDump}`

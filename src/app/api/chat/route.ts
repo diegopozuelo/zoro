@@ -19,6 +19,40 @@ export async function POST(req: NextRequest) {
     counts[s] = (counts[s] || 0) + 1
   })
 
+  // Recent window for time-based data
+  const since = new Date()
+  since.setDate(since.getDate() - 14)
+  const sinceStr = since.toISOString().slice(0, 10)
+  const todayStr = new Date().toISOString().slice(0, 10)
+
+  // Open notes (current tasks, reminders, thoughts)
+  const { data: notes } = await supabase
+    .from('notes')
+    .select('title, description, type, priority, due_date')
+    .eq('done', false)
+    .order('due_date', { ascending: true, nullsFirst: false })
+
+  // Recent journal entries
+  const { data: journal } = await supabase
+    .from('journal')
+    .select('entry_date, content')
+    .gte('entry_date', sinceStr)
+    .order('entry_date', { ascending: false })
+
+  // Recent life data
+  const { data: lifeDays } = await supabase
+    .from('life_days')
+    .select('entry_date, sleep_hours, work_hours, reading_minutes')
+    .gte('entry_date', sinceStr)
+    .order('entry_date', { ascending: false })
+
+  // Recent brainstorm ideas
+  const { data: brainstorm } = await supabase
+    .from('brainstorm')
+    .select('content, tag, created_at')
+    .gte('created_at', sinceStr)
+    .order('created_at', { ascending: false })
+
   const systemPrompt = `You are Zoro, the personal AI assistant for Diego Pozuelo. You know him deeply and help with his job search, outreach, planning, building, and thinking. Be direct, warm, and practical. Give verdicts first, then brief reasoning. Keep responses focused, not dense. Never use dashes in written content you draft for him.
 
 You have a web search tool. Use it whenever current information would help: researching a company before outreach, checking recent news, funding, or hiring signals, verifying facts, or anything where your training data might be stale. Search proactively rather than guessing, but do not search for things you already know well.
@@ -37,8 +71,20 @@ Status breakdown: ${Object.entries(counts).map(([s, c]) => `${s}: ${c}`).join(',
 Applications:
 ${pipeline?.map((r) => `- ${r.company} | ${r.role_title} | ${r.status}${r.notes ? ` | ${r.notes}` : ''}`).join('\n') ?? 'None.'}
 
-Use everything above naturally. You genuinely know Diego, his background, his projects, his goals, his strategy, his voice, and his daily rhythm. Draw on it to give advice that fits him specifically.`
+=== HIS OPEN NOTES AND TASKS (today is ${todayStr}) ===
+These are his current tasks, reminders, and thoughts. Pay attention to anything due today or overdue.
+${notes?.map((n) => `- [${n.type}, ${n.priority}${n.due_date ? `, due ${n.due_date}` : ''}] ${n.title}${n.description ? `: ${n.description}` : ''}`).join('\n') ?? 'None.'}
 
+=== RECENT JOURNAL (last 14 days) ===
+${journal?.map((j) => `${j.entry_date}: ${j.content}`).join('\n\n') ?? 'None.'}
+
+=== RECENT LIFE DATA (last 14 days) ===
+${lifeDays?.map((d) => `${d.entry_date}: sleep ${d.sleep_hours ?? 0}h, work ${d.work_hours ?? 0}h, reading ${d.reading_minutes ?? 0}min`).join('\n') ?? 'None.'}
+
+=== RECENT BRAINSTORM IDEAS (last 14 days) ===
+${brainstorm?.map((b) => `- ${b.content}${b.tag ? ` (${b.tag})` : ''}`).join('\n') ?? 'None.'}
+
+Use everything above naturally. You genuinely know Diego, his background, his projects, his goals, his strategy, his voice, his daily rhythm, what is currently on his mind, and how he has been doing lately. Draw on all of it to give advice that fits him specifically. When he asks what to focus on, factor in his due tasks and how his week has been going.`
   const tools = [{ type: 'web_search_20250305' as const, name: 'web_search' as const, max_uses: 5 }]
 
   // Loop until Claude stops requesting tools and returns a final answer
