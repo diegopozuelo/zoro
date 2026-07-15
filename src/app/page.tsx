@@ -14,6 +14,11 @@ const statusColors: Record<string, string> = {
   Rejected: 'bg-red-50 text-red-700',
   Ghosted: 'bg-neutral-100 text-neutral-600',
   Watchlist: 'bg-amber-50 text-amber-700',
+  Offer: 'bg-green-100 text-green-800',
+  Researching: 'bg-blue-50 text-blue-700',
+  Messaged: 'bg-amber-50 text-amber-700',
+  Replied: 'bg-green-50 text-green-700',
+  Archived: 'bg-neutral-100 text-neutral-400',
 }
 
 function ymd(d: Date) {
@@ -130,7 +135,7 @@ export default async function TodayPage() {
     (e) => e.action_type === 'messaged' && new Date(e.created_at) >= todayMidnight
   ).length
   const msgWeek = (allEvents ?? []).filter(
-    (e) => e.action_type === 'messaged' && e.created_at.slice(0, 10) >= weekStart
+    (e) => e.action_type === 'messaged' && ymd(new Date(e.created_at)) >= weekStart
   ).length
   const msgTotal = (allEvents ?? []).filter((e) => e.action_type === 'messaged').length
   // Lead status breakdown
@@ -174,9 +179,7 @@ export default async function TodayPage() {
       <p className="mt-1 font-display text-xl text-[var(--ink-soft)]">{today}</p>
 
       {/* Today's plan */}
-      {planItems && planItems.length > 0 && (
-        <TodayPlan initialItems={planItems} entryDate={todayStr} />
-      )}
+      <TodayPlan initialItems={planItems ?? []} entryDate={todayStr} />
 
       {/* Focus notes */}
       <TodayNotes initial={focusNotes} today={todayStr} />

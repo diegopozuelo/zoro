@@ -5,39 +5,40 @@ import { supabase } from '@/lib/supabase'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(req: NextRequest) {
-  const { brainDump, targetDate } = await req.json()
+  try {
+    const { brainDump, targetDate } = await req.json()
 
-  const { data: profile } = await supabase.from('profile').select('context').single()
+    const { data: profile } = await supabase.from('profile').select('context').single()
 
-  // Pipeline snapshot for context
-  const { data: pipeline } = await supabase
-    .from('pipeline')
-    .select('status')
-  const counts: Record<string, number> = {}
-  pipeline?.forEach((r) => {
-    const s = r.status || 'Unknown'
-    counts[s] = (counts[s] || 0) + 1
-  })
+    // Pipeline snapshot for context
+    const { data: pipeline } = await supabase
+      .from('pipeline')
+      .select('status')
+    const counts: Record<string, number> = {}
+    pipeline?.forEach((r) => {
+      const s = r.status || 'Unknown'
+      counts[s] = (counts[s] || 0) + 1
+    })
 
-  // Open notes that are due by the target date or high priority
-  const { data: allNotes } = await supabase
-    .from('notes')
-    .select('title, description, type, priority, due_date')
-    .eq('done', false)
-  const relevantNotes = (allNotes ?? []).filter(
-    (n) => (n.due_date && n.due_date <= targetDate) || n.priority === 'High'
-  )
-  const notesBlock =
-    relevantNotes.length > 0
-      ? relevantNotes
-          .map(
-            (n) =>
-              `- [${n.type}, ${n.priority}${n.due_date ? `, due ${n.due_date}` : ''}] ${n.title}${n.description ? `: ${n.description}` : ''}`
-          )
-          .join('\n')
-      : 'None.'
+    // Open notes that are due by the target date or high priority
+    const { data: allNotes } = await supabase
+      .from('notes')
+      .select('title, description, type, priority, due_date')
+      .eq('done', false)
+    const relevantNotes = (allNotes ?? []).filter(
+      (n) => (n.due_date && n.due_date <= targetDate) || n.priority === 'High'
+    )
+    const notesBlock =
+      relevantNotes.length > 0
+        ? relevantNotes
+            .map(
+              (n) =>
+                `- [${n.type}, ${n.priority}${n.due_date ? `, due ${n.due_date}` : ''}] ${n.title}${n.description ? `: ${n.description}` : ''}`
+            )
+            .join('\n')
+        : 'None.'
 
-  const systemPrompt = `You are Zoro, Diego's personal planning assistant. You build his daily plan so he wakes up and just executes without overthinking.
+    const systemPrompt = `You are Zoro, Diego's personal planning assistant. You build his daily plan so he wakes up and just executes without overthinking.
 
 WHO DIEGO IS AND HOW HE WORKS:
 ${profile?.context || 'Context not loaded.'}
@@ -58,30 +59,38 @@ Place these intelligently by their nature: deep or important tasks in the 11 to 
 
 Return ONLY valid JSON, no markdown, no preamble. An array of plan items in this exact shape:
 [{"start_time":"8:30 AM","end_time":"9:10 AM","content":"Read science and tech news","category":"ramp-up"}]`
-  const userPrompt = `Build my plan for ${targetDate}. Here is my brain-dump of what I want to get done:
+    const userPrompt = `Build my plan for ${targetDate}. Here is my brain-dump of what I want to get done:
 
 ${brainDump}`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  })
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    })
 
-  const raw = response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { text: string }).text)
-    .join('\n')
-    .replace(/```json|```/g, '')
-    .trim()
+    const raw = response.content
+      .filter((b) => b.type === 'text')
+      .map((b) => (b as { text: string }).text)
+      .join('\n')
+      .replace(/```json|```/g, '')
+      .trim()
 
-  let items = []
-  try {
-    items = JSON.parse(raw)
-  } catch {
-    return NextResponse.json({ error: 'Could not parse plan', raw }, { status: 500 })
+    let items
+    try {
+      items = JSON.parse(raw)
+    } catch {
+      return NextResponse.json({ error: 'Could not parse plan', raw }, { status: 500 })
+    }
+
+    if (!Array.isArray(items)) {
+      return NextResponse.json({ error: 'Plan response was not an array', raw }, { status: 500 })
+    }
+
+    return NextResponse.json({ items })
+  } catch (err) {
+    console.error('plan route error:', err)
+    return NextResponse.json({ error: 'Plan request failed' }, { status: 500 })
   }
-
-  return NextResponse.json({ items })
 }

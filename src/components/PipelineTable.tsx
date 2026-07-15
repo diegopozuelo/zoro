@@ -63,7 +63,8 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
   async function addBulk() {
     if (!bulkText.trim() || bulkSaving) return
     setBulkSaving(true)
-    const today = new Date().toISOString().slice(0, 10)
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     // Format per line: Company | Role | Location | URL | Applied Jul 9
     const payloads = bulkText
       .split('\n')

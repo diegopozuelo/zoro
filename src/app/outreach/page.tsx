@@ -72,7 +72,8 @@ export default function OutreachPage() {
 
   async function graduateToPipeline(lead: Lead) {
     if (!window.confirm(`Add ${lead.company} to your Pipeline as an application?`)) return
-    const today = new Date().toISOString().slice(0, 10)
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     await supabase.from('pipeline').insert({
       company: lead.company,
       role_title: 'Outreach lead',
