@@ -15,7 +15,7 @@
 
 Zoro is a single user web app that turns a job search into an operating system. Instead of juggling spreadsheets, notes, and chat tabs, everything lives in one place: what to do today, who to reach out to, where each application stands, and an AI assistant that already knows your background and pipeline.
 
-The core loop: capture what matters in **Notes**, plan your day in the **Planner**, execute from the **Today** dashboard, run outreach from the **Outreach** board, track formal applications in the **Pipeline**, and ask the **Assistant** when you need a second brain. Supporting modules (**Profile**, **Journal**, **Brainstorm**, **Life**) keep personal context and habits in the same system.
+The core loop: capture what matters in **Notes**, group related work under **Projects**, plan your day in the **Planner**, execute from the **Today** dashboard, run outreach from the **Outreach** board, track formal applications in the **Pipeline**, and ask the **Assistant** when you need a second brain. Supporting modules (**Profile**, **Journal**, **Brainstorm**, **Life**) keep personal context and habits in the same system.
 
 Built with Next.js (App Router), TypeScript, Tailwind CSS, Supabase, and the Anthropic Claude API. Developed in Cursor.
 
@@ -26,10 +26,11 @@ Built with Next.js (App Router), TypeScript, Tailwind CSS, Supabase, and the Ant
 | Module | What it does |
 |--------|--------------|
 | **Today** | Morning command center. Shows your AI generated time blocked plan with category labels (ramp up, deep work, outreach, applications, and more). Edit any block inline, add or delete tasks, reorder by start time, mark done, or hit **Replan with AI** to rebuild the rest of the day from a natural language description of what actually happened. Each task has a **Start working** button that opens a focused AI coaching chat tied to that block. A **Focus today** strip surfaces the most relevant open notes as sticky note cards, ranked by urgency (overdue and due today first, then high priority, then backfilled), capped with a stacked "more" tile linking to Notes. Inline quick add (with expandable details) captures a task for today without leaving the dashboard. Outreach is the primary daily metric: status breakdown of target companies plus messages sent today, this week, and total. Also surfaces pipeline status breakdown, weekly application count, interview count, life logging streak, top 3 priorities, and yesterday's activity ring summary. One click **Summarize my day** reviews completed tasks, plan progress, life data, and pending items, then generates a warm, honest recap and a pointer toward tomorrow. |
-| **Notes** | Dedicated second brain for tasks, reminders, thoughts, and general notes. Each note has a type, priority (Low / Medium / High), optional due date, and completion tracking. Filterable by type. Stored in a dedicated Supabase table and wired into Today, the Planner, the Assistant, and end of day summaries. |
-| **Outreach** | Command center for proactive company targeting. Companies appear as cards on a kanban board grouped by status: Watchlist, Researching, Messaged, Replied, Archived. Bulk add targets from a pasted list (company name, background notes, contact email per line). Opening a company launches a dedicated workspace with editable background, contact fields, and a persistent AI chat. The chat researches the company with live web search, recommends approach and channel, and drafts outreach in your voice. Image upload supported in chat. Every outreach action (researched, messaged, followed up) logs to a dedicated events table with timestamps, feeding dashboard metrics. One click **Add to Pipeline** graduates a lead into formal application tracking. |
+| **Notes** | Dedicated second brain for tasks, reminders, thoughts, and general notes. Each note has a type, priority (Low / Medium / High), optional due date, completion tracking, and an optional project link. Filterable by type. Stored in a dedicated Supabase table and wired into Today, the Planner, the Assistant, Projects, and end of day summaries. |
+| **Projects** | Big containers (for example Find a job) that connect notes, outreach leads, and pipeline applications. Each project has a context field, status (Active / Paused / Done), a linked items view with link and unlink controls, and a dedicated AI chat (`kind: project`) that reads project context plus linked items. Assign projects from Notes, Outreach, and Pipeline as well. |
+| **Outreach** | Command center for proactive company targeting. Companies appear as cards on a kanban board grouped by status: Watchlist, Researching, Messaged, Replied, Archived. Bulk add targets from a pasted list (company name, background notes, contact email per line). Opening a company launches a dedicated workspace with editable background, contact fields, optional project link, and a persistent AI chat. The chat researches the company with live web search, recommends approach and channel, and drafts outreach in your voice. Image upload supported in chat. Every outreach action (researched, messaged, followed up) logs to a dedicated events table with timestamps, feeding dashboard metrics. One click **Add to Pipeline** graduates a lead into formal application tracking. |
 | **Assistant** | General purpose AI with live web search, image upload, and PDF upload (drag and drop or file picker). Reads your full second brain on every request: profile context, live application pipeline, open notes and due tasks, recent journal entries, life tracking data, and brainstorm ideas. Advice is tailored to what is currently on your mind, what is due, and how your week has been going. Multi chat with rename, delete, and persistent message history stored in Supabase. Personalized greeting on open. |
-| **Pipeline** | Searchable, editable tracker for job applications. Fields include company, role, type, city, status, date applied, job URL, and notes. Color coded statuses: Watchlist, Applied, Interview, Rejected, Ghosted, Offer. Inline add and edit, plus bulk add by pasting a pipe delimited list (`Company \| Role \| Location \| URL \| Status Date`) that parses status and date automatically. Status counts surface on the Today dashboard. |
+| **Pipeline** | Searchable, editable tracker for job applications. Fields include company, role, type, city, status, date applied, job URL, notes, and optional project. Color coded statuses: Watchlist, Applied, Interview, Rejected, Ghosted, Offer. Inline add and edit, plus bulk add by pasting a pipe delimited list (`Company \| Role \| Location \| URL \| Status Date`) that parses status and date automatically. Status counts surface on the Today dashboard. |
 | **Planner** | Nightly planning workflow. Write a freeform brain dump of what you want to accomplish, pick a target date, and Claude generates a structured time blocked plan matched to your daily rhythm (light ramp up in the morning, deep work mid day, wind down in the evening). Due and high priority notes are pulled in and woven into the day as real scheduled blocks, placed around your work rhythm so nothing important gets missed. Review, edit, mark tasks done, then save. Saved plans appear on the Today dashboard for that date. |
 | **Profile** | Stores the personal context every AI feature reads: background, goals, voice, strategy, and work rhythm. The Assistant, Planner, outreach chats, and task sessions all inject this context into their system prompts alongside live pipeline data. |
 | **Journal** | Calendar based daily writing. Navigate by month, see which days have entries, and write or edit per day with automatic persistence. Recent entries feed the Assistant. |
@@ -40,15 +41,15 @@ Built with Next.js (App Router), TypeScript, Tailwind CSS, Supabase, and the Ant
 
 ## Technical highlights
 
-**Claude integrated across the product, not bolted on.** Seven API routes power distinct workflows: daily plan generation, mid day replanning, general assistant chat, per company outreach research kickoff, outreach message drafting, focused task coaching sessions, and end of day summaries. Each route builds a tailored system prompt from live Supabase data.
+**Claude integrated across the product, not bolted on.** API routes power distinct workflows: daily plan generation, mid day replanning, general assistant chat, per company outreach research kickoff, outreach message drafting, focused task coaching sessions, end of day summaries, and project workspace chats. Each route builds a tailored system prompt from live Supabase data.
 
-**A connected second brain.** The Assistant and Planner do not only see profile and pipeline. They also read open notes, journal, life tracking, and brainstorm data, so planning and advice reflect what is due and how the week has actually gone.
+**A connected second brain.** The Assistant and Planner do not only see profile and pipeline. They also read open notes, journal, life tracking, and brainstorm data, so planning and advice reflect what is due and how the week has actually gone. Project chats stay scoped to one project and its linked notes, leads, and applications.
 
-**Tool use beyond text generation.** Assistant and outreach chats use Claude's web search tool for live company research, hiring signals, and current events. The Assistant accepts image and PDF attachments via vision. Outreach workspaces support image upload in chat.
+**Tool use beyond text generation.** Assistant, outreach, and project chats use Claude's web search tool for live research and current events. The Assistant accepts image and PDF attachments via vision. Outreach workspaces support image upload in chat.
 
-**Relational Supabase schema.** Conversations link to plan tasks (`conversation_id` on plan items) and outreach leads. Messages persist per conversation, tagged by kind (assistant vs outreach). Outreach events track researched, messaged, and followed up actions with timestamps for aggregated dashboard metrics. Notes live in their own table with type, priority, due date, and completion fields, and connect into Today, Planner, Assistant, and day summary flows. Separate tables also cover pipeline, leads, plan items, plan meta, priorities, journal, brainstorm, life days, and workouts.
+**Relational Supabase schema.** Conversations link to plan tasks (`conversation_id` on plan items), outreach leads, and projects. Messages persist per conversation, tagged by kind (assistant, outreach, or project). Projects hold context and optionally a dedicated conversation. Notes, leads, and pipeline rows can each carry a nullable `project_id`. Outreach events track researched, messaged, and followed up actions with timestamps for aggregated dashboard metrics. Separate tables also cover plan items, plan meta, priorities, journal, brainstorm, life days, and workouts.
 
-**App Router architecture.** Server components fetch dashboard data at request time (Today page pulls from multiple tables in one render). Interactive surfaces (plan editor, notes board, focus strip, outreach board, assistant, pipeline table, life tracker) are client components that read and write to Supabase directly. API routes handle all Claude calls server side.
+**App Router architecture.** Server components fetch dashboard data at request time (Today page pulls from multiple tables in one render). Interactive surfaces (plan editor, notes board, focus strip, projects workspace, outreach board, assistant, pipeline table, life tracker) are client components that read and write to Supabase directly. API routes handle all Claude calls server side.
 
 **Design direction in progress.** Instrument Serif for display type, activity rings on Life and Today, and sticky note styling on the Focus strip and Notes page. Further visual polish across remaining pages is still on the roadmap.
 
@@ -61,6 +62,7 @@ src/
 ├── app/
 │   ├── page.tsx              # Today dashboard (server component)
 │   ├── notes/                # Notes / second brain
+│   ├── projects/             # Project list + workspace
 │   ├── outreach/             # Outreach kanban + company workspaces
 │   ├── assistant/            # Multi chat AI assistant
 │   ├── pipeline/             # Application tracker
@@ -76,7 +78,9 @@ src/
 │       ├── day-summary/      # End of day AI recap
 │       ├── outreach/         # Draft outreach message
 │       ├── start-outreach/   # Kick off company research chat
-│       └── start-task/       # Launch focused task session
+│       ├── start-task/       # Launch focused task session
+│       ├── start-project/    # Kick off project workspace chat
+│       └── project-chat/     # Project scoped follow up chat
 ├── components/               # Feature UI modules
 └── lib/supabase.ts           # Supabase client
 ```
@@ -101,4 +105,4 @@ _Planned. Not yet built._
 
 Built by **Diego Pozuelo** as a personal productivity system and a portfolio piece for full stack and AI integration work. Zoro is designed to be used every day, not just demonstrated.
 
-**For reviewers:** Start with the **Today** page and **Outreach** board to see the core loop. Then look at `src/app/api/` to see how Claude is wired into each workflow.
+**For reviewers:** Start with the **Today** page, **Projects**, and **Outreach** board to see the core loop. Then look at `src/app/api/` to see how Claude is wired into each workflow.

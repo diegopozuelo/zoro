@@ -4,7 +4,7 @@ import PipelineTable from '@/components/PipelineTable'
 export default async function PipelinePage() {
   const { data: rows } = await supabase
     .from('pipeline')
-    .select('id, company, role_title, role_type, city, status, date_applied, job_url, notes')
+    .select('id, company, role_title, role_type, city, status, date_applied, job_url, notes, project_id')
     .order('date_added', { ascending: false })
 
   return (

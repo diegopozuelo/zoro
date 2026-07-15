@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Plus } from 'lucide-react'
+import ProjectSelect from '@/components/ProjectSelect'
 
 type Row = {
   id: number
@@ -13,6 +14,7 @@ type Row = {
   date_applied: string | null
   job_url: string
   notes: string
+  project_id: number | null
 }
 
 const STATUSES = ['Watchlist', 'Applied', 'Interview', 'Rejected', 'Ghosted', 'Offer']
@@ -28,7 +30,7 @@ const statusStyle: Record<string, string> = {
 
 const blank: Omit<Row, 'id'> = {
   company: '', role_title: '', role_type: '', city: '',
-  status: 'Applied', date_applied: '', job_url: '', notes: '',
+  status: 'Applied', date_applied: '', job_url: '', notes: '', project_id: null,
 }
 
 const MONTHS: Record<string, string> = {
@@ -111,6 +113,7 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
       date_applied: form.date_applied || null,
       job_url: form.job_url,
       notes: form.notes,
+      project_id: form.project_id ?? null,
     }
     if (editing) {
       await supabase.from('pipeline').update(payload).eq('id', editing.id)
@@ -282,6 +285,15 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
                   className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
                   value={form.notes ?? ''}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-neutral-500">project</label>
+                <ProjectSelect
+                  value={form.project_id ?? null}
+                  onChange={(projectId) => setForm({ ...form, project_id: projectId })}
+                  includeDoneIds={form.project_id ? [form.project_id] : []}
+                  className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
                 />
               </div>
             </div>

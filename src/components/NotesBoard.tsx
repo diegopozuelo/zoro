@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Trash2, Circle, CheckCircle2, X } from 'lucide-react'
+import { Plus, Trash2, Circle } from 'lucide-react'
+import ProjectSelect from '@/components/ProjectSelect'
 
 type Note = {
   id: number
@@ -12,6 +13,7 @@ type Note = {
   due_date: string | null
   done: boolean
   created_at: string
+  project_id: number | null
 }
 
 const TYPES = ['Task', 'Reminder', 'Thought', 'Note']
@@ -40,6 +42,7 @@ export default function NotesBoard() {
     type: 'Task',
     priority: 'Medium',
     due_date: '',
+    project_id: null as number | null,
   })
 
   useEffect(() => {
@@ -66,11 +69,12 @@ export default function NotesBoard() {
         type: draft.type,
         priority: draft.priority,
         due_date: draft.due_date || null,
+        project_id: draft.project_id,
       })
       .select()
       .single()
     if (data) setNotes((prev) => [data as Note, ...prev])
-    setDraft({ title: '', description: '', type: 'Task', priority: 'Medium', due_date: '' })
+    setDraft({ title: '', description: '', type: 'Task', priority: 'Medium', due_date: '', project_id: null })
     setAdding(false)
     setSaving(false)
   }
@@ -79,6 +83,13 @@ export default function NotesBoard() {
     // marking done removes it from the active board
     setNotes((prev) => prev.filter((n) => n.id !== note.id))
     await supabase.from('notes').update({ done: true, completed_at: new Date().toISOString() }).eq('id', note.id)
+  }
+
+  async function setProject(note: Note, projectId: number | null) {
+    setNotes((prev) =>
+      prev.map((n) => (n.id === note.id ? { ...n, project_id: projectId } : n))
+    )
+    await supabase.from('notes').update({ project_id: projectId }).eq('id', note.id)
   }
 
   async function deleteNote(id: number) {
@@ -153,6 +164,10 @@ export default function NotesBoard() {
               onChange={(e) => setDraft((d) => ({ ...d, due_date: e.target.value }))}
               className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
             />
+            <ProjectSelect
+              value={draft.project_id}
+              onChange={(projectId) => setDraft((d) => ({ ...d, project_id: projectId }))}
+            />
             <button
               onClick={addNote}
               disabled={saving}
@@ -206,6 +221,14 @@ export default function NotesBoard() {
                         Due {new Date(n.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     )}
+                  </div>
+                  <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                    <ProjectSelect
+                      value={n.project_id}
+                      onChange={(projectId) => setProject(n, projectId)}
+                      includeDoneIds={n.project_id ? [n.project_id] : []}
+                      className="w-full rounded-lg border border-neutral-200 bg-transparent px-2 py-1 text-xs outline-none"
+                    />
                   </div>
                 </div>
               </div>

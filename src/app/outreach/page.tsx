@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Plus, Trash2, Mail, ArrowLeft, ImagePlus, X, CheckCircle2, Clock } from 'lucide-react'
+import ProjectSelect from '@/components/ProjectSelect'
 
 type Lead = {
   id: number
@@ -14,6 +15,7 @@ type Lead = {
   status: string
   conversation_id: number | null
   last_outreach_at: string | null
+  project_id: number | null
 }
 
 const STATUSES = ['Watchlist', 'Researching', 'Messaged', 'Replied', 'Archived']
@@ -305,6 +307,15 @@ export default function OutreachPage() {
                 value={openLead.job_url ?? ''}
                 onChange={(e) => updateLead(openLead.id, { job_url: e.target.value })}
                 placeholder="https://..."
+                className="mt-1 w-full rounded-lg border border-neutral-200 bg-transparent px-3 py-2 text-sm outline-none"
+              />
+            </div>
+            <div>
+              <label className="eyebrow">Project</label>
+              <ProjectSelect
+                value={openLead.project_id}
+                onChange={(projectId) => updateLead(openLead.id, { project_id: projectId })}
+                includeDoneIds={openLead.project_id ? [openLead.project_id] : []}
                 className="mt-1 w-full rounded-lg border border-neutral-200 bg-transparent px-3 py-2 text-sm outline-none"
               />
             </div>

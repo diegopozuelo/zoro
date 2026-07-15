@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, User, KanbanSquare, MessageSquare,
-  Send, CalendarCheck, NotebookPen, Lightbulb, Activity, StickyNote,
+  Send, CalendarCheck, NotebookPen, Lightbulb, Activity, StickyNote, FolderKanban,
 } from 'lucide-react'
 
 const nav = [
   { href: '/', label: 'Today', icon: LayoutDashboard },
   { href: '/notes', label: 'Notes', icon: StickyNote },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { href: '/assistant', label: 'Assistant', icon: MessageSquare },
@@ -28,7 +29,8 @@ export default function Sidebar() {
         <p className="text-xs text-neutral-400">DP Second Brain</p>
       </div>
       {nav.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href
+        const active =
+          pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
         return (
           <Link
             key={href}
