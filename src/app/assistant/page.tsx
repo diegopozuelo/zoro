@@ -63,7 +63,7 @@ export default function AssistantPage() {
   async function newChat() {
     const { data } = await supabase
       .from('conversations')
-      .insert({ title: 'New chat' })
+      .insert({ title: 'New chat', kind: 'assistant' })
       .select()
       .single()
     if (data) {

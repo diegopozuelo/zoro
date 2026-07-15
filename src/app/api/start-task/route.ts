@@ -60,7 +60,7 @@ Give me a tight layout for this block: what done looks like, how to break it int
   const title = content.slice(0, 40)
   const { data: conv } = await supabase
     .from('conversations')
-    .insert({ title })
+    .insert({ title, kind: 'assistant' })
     .select()
     .single()
 
