@@ -124,17 +124,55 @@ export default function Planner() {
   }
 
   async function approve() {
-    await supabase.from('plan_items').delete().eq('entry_date', selected)
-    const toInsert = items.map((it, i) => ({
-      entry_date: selected,
-      start_time: it.start_time,
-      end_time: it.end_time,
-      content: it.content,
-      category: it.category,
-      sort_order: i,
-      done: false,
-    }))
-    await supabase.from('plan_items').insert(toInsert)
+    // Merge: update existing rows in place, insert new ones, delete removed ones.
+    // This keeps conversation_id and done on tasks that still exist.
+    const { data: existing } = await supabase
+      .from('plan_items')
+      .select('id')
+      .eq('entry_date', selected)
+    const existingIds = new Set((existing ?? []).map((r) => r.id as number))
+    const keptIds = new Set<number>()
+
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i]
+      if (it.id && existingIds.has(it.id)) {
+        await supabase
+          .from('plan_items')
+          .update({
+            start_time: it.start_time,
+            end_time: it.end_time,
+            content: it.content,
+            category: it.category,
+            sort_order: i,
+            done: it.done ?? false,
+          })
+          .eq('id', it.id)
+        keptIds.add(it.id)
+      } else {
+        const { data: inserted } = await supabase
+          .from('plan_items')
+          .insert({
+            entry_date: selected,
+            start_time: it.start_time,
+            end_time: it.end_time,
+            content: it.content,
+            category: it.category,
+            sort_order: i,
+            done: it.done ?? false,
+            conversation_id: it.conversation_id ?? null,
+          })
+          .select()
+          .single()
+        if (inserted) keptIds.add(inserted.id)
+      }
+    }
+
+    for (const id of existingIds) {
+      if (!keptIds.has(id)) {
+        await supabase.from('plan_items').delete().eq('id', id)
+      }
+    }
+
     await supabase
       .from('plan_meta')
       .upsert({ entry_date: selected, brain_dump: brainDump, status: 'approved' }, { onConflict: 'entry_date' })

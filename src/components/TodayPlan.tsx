@@ -76,22 +76,61 @@ export default function TodayPlan({
       body: JSON.stringify({ items, instruction: replanText, currentTime: now }),
     })
     const data = await res.json()
-    if (data.items) {
-      // wipe today's rows, insert the revised plan, keep it on screen
-      await supabase.from('plan_items').delete().eq('entry_date', entryDate)
-      const toInsert = data.items.map(
-        (it: { start_time: string; end_time: string; content: string; category: string; done?: boolean }, i: number) => ({
-          entry_date: entryDate,
-          start_time: it.start_time,
-          end_time: it.end_time,
-          content: it.content,
-          category: it.category,
-          sort_order: i,
-          done: it.done ?? false,
-        })
-      )
-      const { data: inserted } = await supabase.from('plan_items').insert(toInsert).select()
-      if (inserted) setItems(inserted as PlanItem[])
+    if (data.items && Array.isArray(data.items)) {
+      type Incoming = {
+        start_time: string
+        end_time: string
+        content: string
+        category: string
+        done?: boolean
+      }
+      const incoming = data.items as Incoming[]
+      const unused = [...items]
+      const next: PlanItem[] = []
+
+      for (let i = 0; i < incoming.length; i++) {
+        const it = incoming[i]
+        const matchIdx = unused.findIndex(
+          (e) => e.content.trim() === (it.content ?? '').trim()
+        )
+        if (matchIdx >= 0) {
+          const match = unused.splice(matchIdx, 1)[0]
+          const done = it.done ?? match.done
+          const patch = {
+            start_time: it.start_time,
+            end_time: it.end_time,
+            content: it.content,
+            category: it.category,
+            sort_order: i,
+            done,
+          }
+          await supabase.from('plan_items').update(patch).eq('id', match.id)
+          next.push({ ...match, ...patch })
+        } else {
+          const row = {
+            entry_date: entryDate,
+            start_time: it.start_time,
+            end_time: it.end_time,
+            content: it.content,
+            category: it.category,
+            sort_order: i,
+            done: it.done ?? false,
+          }
+          const { data: inserted } = await supabase
+            .from('plan_items')
+            .insert(row)
+            .select()
+            .single()
+          if (inserted) next.push(inserted as PlanItem)
+        }
+      }
+
+      // Drop blocks that no longer appear in the revised plan
+      for (const leftover of unused) {
+        await supabase.from('plan_items').delete().eq('id', leftover.id)
+      }
+
+      setItems(next)
       setReplanText('')
       setReplanOpen(false)
     }
