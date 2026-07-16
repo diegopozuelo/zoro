@@ -63,7 +63,7 @@ export default function ProjectSelect({
         const v = e.target.value
         onChange(v ? Number(v) : null)
       }}
-      className={className || 'rounded-lg border border-neutral-300 px-2 py-1.5 text-sm'}
+      className={className || 'input-dark px-2 py-1.5 text-sm'}
     >
       {allowNone && <option value="">No project</option>}
       {options.map((p) => (

@@ -23,10 +23,10 @@ const nav = [
 export default function Sidebar() {
   const pathname = usePathname()
   return (
-    <aside className="flex w-60 shrink-0 flex-col gap-1 border-r border-neutral-200 bg-neutral-50 p-4">
+    <aside className="flex w-60 shrink-0 flex-col gap-1 border-r border-[var(--line)] bg-[var(--paper-elevated)] p-4">
       <div className="px-3 py-4">
-        <span className="text-lg font-semibold tracking-tight">Zoro</span>
-        <p className="text-xs text-neutral-400">DP Second Brain</p>
+        <span className="font-display text-lg tracking-tight text-[var(--ink)]">Zoro</span>
+        <p className="mt-0.5 text-xs text-[var(--ink-faint)]">DP Second Brain</p>
       </div>
       {nav.map(({ href, label, icon: Icon }) => {
         const active =
@@ -35,10 +35,15 @@ export default function Sidebar() {
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-              active ? 'bg-neutral-900 text-white' : 'text-neutral-700 hover:bg-neutral-200'
+            className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-[var(--dur-med)] ${
+              active
+                ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
+                : 'text-[var(--ink-soft)] hover:bg-white/5 hover:text-[var(--ink)]'
             }`}
           >
+            {active && (
+              <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />
+            )}
             <Icon size={18} />
             {label}
           </Link>

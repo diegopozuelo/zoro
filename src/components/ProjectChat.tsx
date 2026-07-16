@@ -101,17 +101,17 @@ export default function ProjectChat({
 
   if (!activeId) {
     return (
-      <section className="mt-10">
-        <h2 className="eyebrow">Project chat</h2>
-        <div className="card mt-3 flex flex-col items-center justify-center gap-3 p-10 text-center">
-          <p className="text-sm text-[var(--ink-soft)]">
+      <section className="hud-panel relative mt-6 p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+        <div className="section-rail">
+          <h2 className="eyebrow eyebrow-accent !mb-0">Project chat</h2>
+        </div>
+        <div className="mt-2 flex flex-col items-center justify-center gap-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--accent)_5%,transparent)] px-6 py-10 text-center">
+          <p className="max-w-md text-sm text-[var(--ink-soft)]">
             Start a focused chat for {projectName}. Zoro will read the project context and linked items.
           </p>
-          <button
-            onClick={startChat}
-            disabled={starting}
-            className="rounded-lg bg-neutral-900 px-5 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
-          >
+          <button onClick={startChat} disabled={starting} className="btn-primary">
             {starting ? 'Starting...' : 'Start project chat'}
           </button>
         </div>
@@ -120,22 +120,33 @@ export default function ProjectChat({
   }
 
   return (
-    <section className="mt-10">
-      <h2 className="eyebrow">Project chat</h2>
-      <div className="card mt-3 flex flex-col p-4" style={{ height: '520px' }}>
+    <section className="hud-panel relative mt-6 p-5 sm:p-6">
+      <span className="hud-corners-tr" aria-hidden />
+      <span className="hud-corners-bl" aria-hidden />
+      <div className="section-rail">
+        <h2 className="eyebrow eyebrow-accent !mb-0">Project chat</h2>
+      </div>
+      <div
+        className="mt-2 flex flex-col rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--paper)_40%,transparent)] p-4"
+        style={{ height: '520px' }}
+      >
         <div className="flex-1 space-y-4 overflow-y-auto">
           {messages.map((m, i) => (
             <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
               <div
-                className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-lg px-4 py-2 text-sm ${
-                  m.role === 'user' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-800'
+                className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-xl px-4 py-2.5 text-sm ${
+                  m.role === 'user'
+                    ? 'bg-[var(--accent)] text-[#041018] shadow-[0_0_16px_var(--accent-glow)]'
+                    : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink)]'
                 }`}
               >
                 {m.content}
               </div>
             </div>
           ))}
-          {loading && <p className="text-sm text-neutral-400">Thinking...</p>}
+          {loading && (
+            <p className="font-mono-metric text-sm text-[var(--accent)]">Thinking...</p>
+          )}
           <div ref={bottomRef} />
         </div>
         <div className="mt-3 flex gap-2">
@@ -144,12 +155,12 @@ export default function ProjectChat({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
             placeholder={`Ask about ${projectName}...`}
-            className="flex-1 rounded-lg border border-neutral-300 px-4 py-2 text-sm"
+            className="input-dark flex-1 px-4 py-2 text-sm"
           />
           <button
             onClick={send}
             disabled={loading || !input.trim()}
-            className="rounded-lg bg-neutral-900 px-5 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
+            className="btn-primary"
           >
             Send
           </button>

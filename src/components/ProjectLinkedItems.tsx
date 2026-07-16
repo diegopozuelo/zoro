@@ -29,28 +29,28 @@ type PipeRow = {
   project_id: number | null
 }
 
-const noteTypeColor: Record<string, string> = {
-  Task: 'bg-blue-50 text-blue-700',
-  Reminder: 'bg-amber-50 text-amber-700',
-  Thought: 'bg-purple-50 text-purple-700',
-  Note: 'bg-neutral-100 text-neutral-600',
+const noteTypePill: Record<string, string> = {
+  Task: 'status-pill status-pill-blue',
+  Reminder: 'status-pill status-pill-amber',
+  Thought: 'status-pill status-pill-purple',
+  Note: 'status-pill status-pill-neutral',
 }
 
-const leadStatusColor: Record<string, string> = {
-  Watchlist: 'bg-neutral-100 text-neutral-700',
-  Researching: 'bg-blue-50 text-blue-700',
-  Messaged: 'bg-amber-50 text-amber-700',
-  Replied: 'bg-green-50 text-green-700',
-  Archived: 'bg-neutral-100 text-neutral-400',
+const leadStatusPill: Record<string, string> = {
+  Watchlist: 'status-pill status-pill-neutral',
+  Researching: 'status-pill status-pill-blue',
+  Messaged: 'status-pill status-pill-amber',
+  Replied: 'status-pill status-pill-green',
+  Archived: 'status-pill status-pill-neutral',
 }
 
-const pipeStatusColor: Record<string, string> = {
-  Offer: 'bg-green-100 text-green-800',
-  Interview: 'bg-blue-100 text-blue-800',
-  Applied: 'bg-neutral-100 text-neutral-700',
-  Watchlist: 'bg-amber-100 text-amber-800',
-  Rejected: 'bg-red-100 text-red-700',
-  Ghosted: 'bg-neutral-100 text-neutral-400',
+const pipeStatusPill: Record<string, string> = {
+  Offer: 'status-pill status-pill-green',
+  Interview: 'status-pill status-pill-blue',
+  Applied: 'status-pill status-pill-neutral',
+  Watchlist: 'status-pill status-pill-amber',
+  Rejected: 'status-pill status-pill-red',
+  Ghosted: 'status-pill status-pill-neutral',
 }
 
 export default function ProjectLinkedItems({ projectId }: { projectId: number }) {
@@ -168,170 +168,152 @@ export default function ProjectLinkedItems({ projectId }: { projectId: number })
   const otherNotes = notes.filter((n) => n.type !== 'Task')
 
   return (
-    <div className="mt-10 space-y-8">
-      <div>
-        <h2 className="eyebrow">Linked items</h2>
-        <p className="mt-1 text-xs text-[var(--ink-soft)]">
-          Connect existing notes, outreach leads, and applications to this project.
-        </p>
+    <section className="hud-panel relative mt-6 p-5 sm:p-6">
+      <span className="hud-corners-tr" aria-hidden />
+      <span className="hud-corners-bl" aria-hidden />
+
+      <div className="section-rail">
+        <h2 className="eyebrow eyebrow-accent !mb-0">Linked items</h2>
       </div>
+      <p className="mb-6 text-xs text-[var(--ink-soft)]">
+        Connect existing notes, outreach leads, and applications to this project.
+      </p>
 
-      {/* Tasks (notes typed as Task) */}
-      <section>
-        <div className="flex items-baseline justify-between">
-          <h3 className="font-display text-2xl">Tasks</h3>
-          <Link href="/notes" className="text-xs text-[var(--ink-soft)] hover:text-[var(--ink)]">
-            Open Notes
-          </Link>
+      <div className="space-y-8">
+        <div>
+          <div className="flex items-baseline justify-between">
+            <h3 className="font-display text-2xl tracking-tight text-[var(--ink)]">Tasks</h3>
+            <Link href="/notes" className="text-xs text-[var(--ink-soft)] hover:text-[var(--accent)]">
+              Open Notes
+            </Link>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            {tasks.length === 0 && (
+              <p className="text-sm text-[var(--ink-faint)]">No tasks linked yet.</p>
+            )}
+            {tasks.map((n) => (
+              <LinkedRow
+                key={n.id}
+                title={n.title}
+                badges={[
+                  <span key="t" className={noteTypePill.Task}>Task</span>,
+                  n.done ? (
+                    <span key="d" className="text-xs text-[var(--ok)]">Done</span>
+                  ) : null,
+                ]}
+                onUnlink={() => unlinkNote(n.id)}
+              />
+            ))}
+          </div>
         </div>
-        <div className="mt-3 space-y-1.5">
-          {tasks.length === 0 && (
-            <p className="text-sm text-[var(--ink-soft)]">No tasks linked yet.</p>
-          )}
-          {tasks.map((n) => (
-            <LinkedRow
-              key={n.id}
-              title={n.title}
-              badges={[
-                <span key="t" className={`rounded-full px-2 py-0.5 text-xs font-medium ${noteTypeColor.Task}`}>
-                  Task
-                </span>,
-                n.done ? (
-                  <span key="d" className="text-xs text-green-600">
-                    Done
-                  </span>
-                ) : null,
-              ]}
-              onUnlink={() => unlinkNote(n.id)}
-            />
-          ))}
-        </div>
-      </section>
 
-      {/* Other notes */}
-      <section>
-        <h3 className="font-display text-2xl">Notes</h3>
-        <div className="mt-3 space-y-1.5">
-          {otherNotes.length === 0 && (
-            <p className="text-sm text-[var(--ink-soft)]">No other notes linked yet.</p>
-          )}
-          {otherNotes.map((n) => (
-            <LinkedRow
-              key={n.id}
-              title={n.title}
-              badges={[
-                <span
-                  key="t"
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    noteTypeColor[n.type] ?? 'bg-neutral-100 text-neutral-600'
-                  }`}
-                >
-                  {n.type}
-                </span>,
-              ]}
-              onUnlink={() => unlinkNote(n.id)}
-            />
-          ))}
+        <div>
+          <h3 className="font-display text-2xl tracking-tight text-[var(--ink)]">Notes</h3>
+          <div className="mt-3 space-y-1.5">
+            {otherNotes.length === 0 && (
+              <p className="text-sm text-[var(--ink-faint)]">No other notes linked yet.</p>
+            )}
+            {otherNotes.map((n) => (
+              <LinkedRow
+                key={n.id}
+                title={n.title}
+                badges={[
+                  <span key="t" className={noteTypePill[n.type] ?? 'status-pill status-pill-neutral'}>
+                    {n.type}
+                  </span>,
+                ]}
+                onUnlink={() => unlinkNote(n.id)}
+              />
+            ))}
+          </div>
+          <LinkPicker
+            label="Link a note"
+            value={pickNote}
+            onChange={setPickNote}
+            onLink={linkNote}
+            linking={linking}
+            options={availNotes.map((n) => ({
+              value: String(n.id),
+              label: `${n.type}: ${n.title}`,
+            }))}
+          />
         </div>
-        <LinkPicker
-          label="Link a note"
-          value={pickNote}
-          onChange={setPickNote}
-          onLink={linkNote}
-          linking={linking}
-          options={availNotes.map((n) => ({
-            value: String(n.id),
-            label: `${n.type}: ${n.title}`,
-          }))}
-        />
-      </section>
 
-      {/* Leads */}
-      <section>
-        <div className="flex items-baseline justify-between">
-          <h3 className="font-display text-2xl">Outreach</h3>
-          <Link href="/outreach" className="text-xs text-[var(--ink-soft)] hover:text-[var(--ink)]">
-            Open Outreach
-          </Link>
+        <div>
+          <div className="flex items-baseline justify-between">
+            <h3 className="font-display text-2xl tracking-tight text-[var(--ink)]">Outreach</h3>
+            <Link href="/outreach" className="text-xs text-[var(--ink-soft)] hover:text-[var(--accent)]">
+              Open Outreach
+            </Link>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            {leads.length === 0 && (
+              <p className="text-sm text-[var(--ink-faint)]">No leads linked yet.</p>
+            )}
+            {leads.map((l) => (
+              <LinkedRow
+                key={l.id}
+                title={l.company}
+                badges={[
+                  <span key="s" className={leadStatusPill[l.status] ?? 'status-pill status-pill-neutral'}>
+                    {l.status}
+                  </span>,
+                ]}
+                onUnlink={() => unlinkLead(l.id)}
+              />
+            ))}
+          </div>
+          <LinkPicker
+            label="Link a lead"
+            value={pickLead}
+            onChange={setPickLead}
+            onLink={linkLead}
+            linking={linking}
+            options={availLeads.map((l) => ({
+              value: String(l.id),
+              label: `${l.company} (${l.status})`,
+            }))}
+          />
         </div>
-        <div className="mt-3 space-y-1.5">
-          {leads.length === 0 && (
-            <p className="text-sm text-[var(--ink-soft)]">No leads linked yet.</p>
-          )}
-          {leads.map((l) => (
-            <LinkedRow
-              key={l.id}
-              title={l.company}
-              badges={[
-                <span
-                  key="s"
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    leadStatusColor[l.status] ?? 'bg-neutral-100 text-neutral-600'
-                  }`}
-                >
-                  {l.status}
-                </span>,
-              ]}
-              onUnlink={() => unlinkLead(l.id)}
-            />
-          ))}
-        </div>
-        <LinkPicker
-          label="Link a lead"
-          value={pickLead}
-          onChange={setPickLead}
-          onLink={linkLead}
-          linking={linking}
-          options={availLeads.map((l) => ({
-            value: String(l.id),
-            label: `${l.company} (${l.status})`,
-          }))}
-        />
-      </section>
 
-      {/* Pipeline */}
-      <section>
-        <div className="flex items-baseline justify-between">
-          <h3 className="font-display text-2xl">Pipeline</h3>
-          <Link href="/pipeline" className="text-xs text-[var(--ink-soft)] hover:text-[var(--ink)]">
-            Open Pipeline
-          </Link>
+        <div>
+          <div className="flex items-baseline justify-between">
+            <h3 className="font-display text-2xl tracking-tight text-[var(--ink)]">Pipeline</h3>
+            <Link href="/pipeline" className="text-xs text-[var(--ink-soft)] hover:text-[var(--accent)]">
+              Open Pipeline
+            </Link>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            {apps.length === 0 && (
+              <p className="text-sm text-[var(--ink-faint)]">No applications linked yet.</p>
+            )}
+            {apps.map((a) => (
+              <LinkedRow
+                key={a.id}
+                title={`${a.company}${a.role_title ? ` · ${a.role_title}` : ''}`}
+                badges={[
+                  <span key="s" className={pipeStatusPill[a.status] ?? 'status-pill status-pill-neutral'}>
+                    {a.status}
+                  </span>,
+                ]}
+                onUnlink={() => unlinkApp(a.id)}
+              />
+            ))}
+          </div>
+          <LinkPicker
+            label="Link an application"
+            value={pickApp}
+            onChange={setPickApp}
+            onLink={linkApp}
+            linking={linking}
+            options={availApps.map((a) => ({
+              value: String(a.id),
+              label: `${a.company}${a.role_title ? ` · ${a.role_title}` : ''} (${a.status})`,
+            }))}
+          />
         </div>
-        <div className="mt-3 space-y-1.5">
-          {apps.length === 0 && (
-            <p className="text-sm text-[var(--ink-soft)]">No applications linked yet.</p>
-          )}
-          {apps.map((a) => (
-            <LinkedRow
-              key={a.id}
-              title={`${a.company}${a.role_title ? ` · ${a.role_title}` : ''}`}
-              badges={[
-                <span
-                  key="s"
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    pipeStatusColor[a.status] ?? 'bg-neutral-100 text-neutral-600'
-                  }`}
-                >
-                  {a.status}
-                </span>,
-              ]}
-              onUnlink={() => unlinkApp(a.id)}
-            />
-          ))}
-        </div>
-        <LinkPicker
-          label="Link an application"
-          value={pickApp}
-          onChange={setPickApp}
-          onLink={linkApp}
-          linking={linking}
-          options={availApps.map((a) => ({
-            value: String(a.id),
-            label: `${a.company}${a.role_title ? ` · ${a.role_title}` : ''} (${a.status})`,
-          }))}
-        />
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }
 
@@ -345,14 +327,14 @@ function LinkedRow({
   onUnlink: () => void
 }) {
   return (
-    <div className="group flex items-center justify-between gap-3 rounded-lg border border-[var(--line)] bg-[var(--card)] px-4 py-2.5">
+    <div className="group interactive-row flex items-center justify-between gap-3 rounded-lg border border-[var(--line)] bg-[var(--card)] px-4 py-2.5">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
+        <p className="truncate text-sm font-medium text-[var(--ink)]">{title}</p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">{badges}</div>
       </div>
       <button
         onClick={onUnlink}
-        className="hidden shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs text-neutral-400 hover:text-red-600 group-hover:flex"
+        className="hidden shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs text-[var(--ink-faint)] hover:text-[var(--danger)] group-hover:flex"
         title="Unlink from project"
       >
         <Link2Off size={14} />
@@ -382,9 +364,9 @@ function LinkPicker({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none"
+        className="input-dark flex-1 px-3 py-2 text-sm"
       >
-        <option value="">{options.length ? label : `No unlinked items`}</option>
+        <option value="">{options.length ? label : 'No unlinked items'}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -394,7 +376,7 @@ function LinkPicker({
       <button
         onClick={onLink}
         disabled={!value || linking}
-        className="flex items-center gap-1 rounded-lg bg-neutral-900 px-3 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
+        className="btn-primary !px-3 !py-2"
       >
         <Plus size={14} />
         Link

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Trash2, Circle } from 'lucide-react'
+import { Plus, Trash2, Circle, Check } from 'lucide-react'
 import ProjectSelect from '@/components/ProjectSelect'
 
 type Note = {
@@ -19,16 +19,16 @@ type Note = {
 const TYPES = ['Task', 'Reminder', 'Thought', 'Note']
 const PRIORITIES = ['Low', 'Medium', 'High']
 
-const typeColor: Record<string, string> = {
-  Task: 'bg-blue-50 text-blue-700',
-  Reminder: 'bg-amber-50 text-amber-700',
-  Thought: 'bg-purple-50 text-purple-700',
-  Note: 'bg-neutral-100 text-neutral-600',
+const typePill: Record<string, string> = {
+  Task: 'status-pill status-pill-blue',
+  Reminder: 'status-pill status-pill-amber',
+  Thought: 'status-pill status-pill-purple',
+  Note: 'status-pill status-pill-neutral',
 }
-const priorityColor: Record<string, string> = {
-  Low: 'bg-neutral-100 text-neutral-500',
-  Medium: 'bg-amber-50 text-amber-700',
-  High: 'bg-red-50 text-red-700',
+const priorityPill: Record<string, string> = {
+  Low: 'status-pill status-pill-neutral',
+  Medium: 'status-pill status-pill-amber',
+  High: 'status-pill status-pill-red',
 }
 
 export default function NotesBoard() {
@@ -80,7 +80,6 @@ export default function NotesBoard() {
   }
 
   async function toggleDone(note: Note) {
-    // marking done removes it from the active board
     setNotes((prev) => prev.filter((n) => n.id !== note.id))
     await supabase.from('notes').update({ done: true, completed_at: new Date().toISOString() }).eq('id', note.id)
   }
@@ -98,144 +97,184 @@ export default function NotesBoard() {
   }
 
   const shown = filter === 'All' ? notes : notes.filter((n) => n.type === filter)
+  const counts = TYPES.reduce(
+    (acc, t) => {
+      acc[t] = notes.filter((n) => n.type === t).length
+      return acc
+    },
+    {} as Record<string, number>
+  )
 
   return (
-    <div className="mt-6">
-      {/* Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1.5">
-          {['All', ...TYPES].map((t) => (
-            <button
-              key={t}
-              onClick={() => setFilter(t)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                filter === t ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => setAdding((v) => !v)}
-          className="flex items-center gap-2 rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700"
-        >
-          <Plus size={16} />
-          New note
-        </button>
-      </div>
+    <section className="motion-fade-in mt-8" style={{ animationDelay: '80ms' }}>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
 
-      {/* Add form */}
-      {adding && (
-        <div className="card mt-4 p-5">
-          <input
-            value={draft.title}
-            onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-            placeholder="Title, e.g. Research 5 web tech options for the venture"
-            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-            autoFocus
-          />
-          <textarea
-            rows={2}
-            value={draft.description}
-            onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-            placeholder="Description (optional)"
-            className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-          />
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <select
-              value={draft.type}
-              onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value }))}
-              className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
-            >
-              {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <select
-              value={draft.priority}
-              onChange={(e) => setDraft((d) => ({ ...d, priority: e.target.value }))}
-              className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
-            >
-              {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <label className="text-xs text-neutral-500">Due</label>
-            <input
-              type="date"
-              value={draft.due_date}
-              onChange={(e) => setDraft((d) => ({ ...d, due_date: e.target.value }))}
-              className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
-            />
-            <ProjectSelect
-              value={draft.project_id}
-              onChange={(projectId) => setDraft((d) => ({ ...d, project_id: projectId }))}
-            />
-            <button
-              onClick={addNote}
-              disabled={saving}
-              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Add'}
-            </button>
-            <button onClick={() => setAdding(false)} className="text-sm text-neutral-500 hover:text-neutral-700">
-              Cancel
-            </button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="section-rail !mb-1">
+              <h2 className="eyebrow eyebrow-accent !mb-0">Active stack</h2>
+            </div>
+            <p className="text-sm text-[var(--ink-soft)]">
+              <span className="font-mono-metric text-[var(--accent)]">{notes.length}</span>
+              {' '}open
+              {filter !== 'All' && (
+                <span className="text-[var(--ink-faint)]">
+                  {' '}· showing {shown.length}
+                </span>
+              )}
+            </p>
           </div>
+          <button onClick={() => setAdding((v) => !v)} className="btn-primary">
+            <Plus size={16} />
+            New note
+          </button>
         </div>
-      )}
 
-      {/* Notes grid */}
-      {shown.length === 0 ? (
-        <p className="mt-8 text-sm text-[var(--ink-faint)]">Nothing here yet.</p>
-      ) : (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((n) => (
-            <div key={n.id} className="card group relative p-4">
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {['All', ...TYPES].map((t) => {
+            const active = filter === t
+            const count = t === 'All' ? notes.length : counts[t] ?? 0
+            return (
               <button
-                onClick={() => deleteNote(n.id)}
-                className="absolute right-3 top-3 hidden text-neutral-300 hover:text-red-600 group-hover:block"
-                title="Delete"
+                key={t}
+                onClick={() => setFilter(t)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition duration-[var(--dur-med)] ${
+                  active
+                    ? 'bg-[var(--accent)] text-[#041018] shadow-[0_0_16px_var(--accent-glow)]'
+                    : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)] hover:border-[color-mix(in_srgb,var(--accent)_40%,var(--line))] hover:text-[var(--ink)]'
+                }`}
               >
-                <Trash2 size={14} />
+                {t}
+                <span className={`ml-1.5 font-mono-metric text-xs ${active ? 'opacity-70' : 'text-[var(--ink-faint)]'}`}>
+                  {count}
+                </span>
               </button>
-              <div className="flex items-start gap-2">
+            )
+          })}
+        </div>
+
+        {adding && (
+          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--accent)_6%,var(--card))] p-4">
+            <input
+              value={draft.title}
+              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+              placeholder="Title, e.g. Research five web tech options for the venture"
+              className="input-dark w-full px-3 py-2 text-sm"
+              autoFocus
+            />
+            <textarea
+              rows={2}
+              value={draft.description}
+              onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+              placeholder="Description (optional)"
+              className="input-dark mt-2 w-full px-3 py-2 text-sm"
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <select
+                value={draft.type}
+                onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value }))}
+                className="input-dark px-2 py-1.5 text-sm"
+              >
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <select
+                value={draft.priority}
+                onChange={(e) => setDraft((d) => ({ ...d, priority: e.target.value }))}
+                className="input-dark px-2 py-1.5 text-sm"
+              >
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              <label className="text-xs text-[var(--ink-faint)]">Due</label>
+              <input
+                type="date"
+                value={draft.due_date}
+                onChange={(e) => setDraft((d) => ({ ...d, due_date: e.target.value }))}
+                className="input-dark px-2 py-1.5 text-sm"
+              />
+              <ProjectSelect
+                value={draft.project_id}
+                onChange={(projectId) => setDraft((d) => ({ ...d, project_id: projectId }))}
+                className="input-dark px-2 py-1.5 text-sm"
+              />
+              <button onClick={addNote} disabled={saving} className="btn-primary !px-4 !py-2">
+                <Check size={14} />
+                {saving ? 'Saving...' : 'Add'}
+              </button>
+              <button
+                onClick={() => setAdding(false)}
+                className="text-sm text-[var(--ink-faint)] hover:text-[var(--ink)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {shown.length === 0 ? (
+          <p className="mt-8 text-sm text-[var(--ink-faint)]">
+            Nothing in this filter. Capture something above or switch filters.
+          </p>
+        ) : (
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map((n) => (
+              <div
+                key={n.id}
+                className="group relative rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_90%,transparent)] p-4 transition duration-[var(--dur-med)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))] hover:shadow-[0_0_28px_var(--accent-glow)]"
+              >
                 <button
-                  onClick={() => toggleDone(n)}
-                  className="mt-0.5 shrink-0 text-neutral-400 hover:text-green-600"
-                  title="Mark done"
+                  onClick={() => deleteNote(n.id)}
+                  className="absolute right-3 top-3 text-[var(--ink-faint)] opacity-0 transition hover:text-[var(--danger)] group-hover:opacity-100"
+                  title="Delete"
                 >
-                  <Circle size={16} />
+                  <Trash2 size={14} />
                 </button>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-snug">{n.title}</p>
-                  {n.description && (
-                    <p className="mt-1 text-xs text-[var(--ink-soft)]">{n.description}</p>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeColor[n.type]}`}>
-                      {n.type}
-                    </span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityColor[n.priority]}`}>
-                      {n.priority}
-                    </span>
-                    {n.due_date && (
-                      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                        Due {new Date(n.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
+                <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => toggleDone(n)}
+                    className="mt-0.5 shrink-0 text-[var(--ink-faint)] transition hover:text-[var(--ok)]"
+                    title="Mark done"
+                  >
+                    <Circle size={16} />
+                  </button>
+                  <div className="min-w-0 flex-1 pr-5">
+                    <p className="text-sm font-semibold leading-snug text-[var(--ink)]">{n.title}</p>
+                    {n.description && (
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--ink-soft)]">{n.description}</p>
                     )}
-                  </div>
-                  <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                    <ProjectSelect
-                      value={n.project_id}
-                      onChange={(projectId) => setProject(n, projectId)}
-                      includeDoneIds={n.project_id ? [n.project_id] : []}
-                      className="w-full rounded-lg border border-neutral-200 bg-transparent px-2 py-1 text-xs outline-none"
-                    />
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      <span className={typePill[n.type] ?? 'status-pill status-pill-neutral'}>
+                        {n.type}
+                      </span>
+                      <span className={priorityPill[n.priority] ?? 'status-pill status-pill-neutral'}>
+                        {n.priority}
+                      </span>
+                      {n.due_date && (
+                        <span className="status-pill status-pill-neutral">
+                          Due {new Date(n.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2.5" onClick={(e) => e.stopPropagation()}>
+                      <ProjectSelect
+                        value={n.project_id}
+                        onChange={(projectId) => setProject(n, projectId)}
+                        includeDoneIds={n.project_id ? [n.project_id] : []}
+                        className="input-dark w-full px-2 py-1 text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   )
 }

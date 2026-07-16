@@ -16,7 +16,6 @@ export default function Journal() {
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
 
-  // Load which dates have entries (for dots on the calendar)
   useEffect(() => {
     async function loadDates() {
       const { data } = await supabase.from('journal').select('entry_date')
@@ -25,7 +24,6 @@ export default function Journal() {
     loadDates()
   }, [saving])
 
-  // Load the selected day's entry
   useEffect(() => {
     async function loadEntry() {
       const { data } = await supabase
@@ -46,7 +44,6 @@ export default function Journal() {
     setSaving(false)
   }
 
-  // Build the calendar grid
   const firstDay = new Date(viewYear, viewMonth, 1).getDay()
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const cells: (number | null)[] = []
@@ -77,23 +74,40 @@ export default function Journal() {
     day: 'numeric',
   })
 
+  const todayStr = ymd(today)
+  const entryCount = entryDates.size
+
   return (
-    <div className="grid grid-cols-2 gap-8">
-      {/* Calendar */}
-      <div>
-        <div className="flex items-center justify-between">
-          <span className="font-medium">{monthName}</span>
-          <div className="flex gap-1">
-            <button onClick={prevMonth} className="rounded p-1 hover:bg-neutral-100">
+    <section
+      className="motion-fade-in mt-8 grid grid-cols-1 gap-5 pb-10 lg:grid-cols-2"
+      style={{ animationDelay: '80ms' }}
+    >
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="section-rail !mb-1">
+              <h2 className="eyebrow eyebrow-accent !mb-0">Calendar</h2>
+            </div>
+            <p className="text-sm text-[var(--ink-soft)]">
+              <span className="font-mono-metric text-[var(--accent)]">{entryCount}</span>
+              {' '}entries logged
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono-metric text-sm text-[var(--ink)]">{monthName}</span>
+            <button onClick={prevMonth} className="btn-ghost !p-2" title="Previous month">
               <ChevronLeft size={18} />
             </button>
-            <button onClick={nextMonth} className="rounded p-1 hover:bg-neutral-100">
+            <button onClick={nextMonth} className="btn-ghost !p-2" title="Next month">
               <ChevronRight size={18} />
             </button>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs text-neutral-400">
+        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-mono-metric text-[var(--ink-faint)]">
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
             <div key={i} className="py-1">{d}</div>
           ))}
@@ -104,19 +118,20 @@ export default function Journal() {
             const dateStr = ymd(new Date(viewYear, viewMonth, d))
             const isSelected = dateStr === selected
             const hasEntry = entryDates.has(dateStr)
+            const isToday = dateStr === todayStr
             return (
               <button
                 key={i}
                 onClick={() => setSelected(dateStr)}
-                className={`relative aspect-square rounded-lg text-sm ${
+                className={`relative aspect-square rounded-lg text-sm font-mono-metric transition duration-[var(--dur-med)] ${
                   isSelected
-                    ? 'bg-neutral-900 text-white'
-                    : 'hover:bg-neutral-100'
-                }`}
+                    ? 'bg-[var(--accent)] text-[#041018] shadow-[0_0_16px_var(--accent-glow)]'
+                    : 'border border-transparent text-[var(--ink)] hover:border-[color-mix(in_srgb,var(--accent)_40%,var(--line))] hover:bg-[color-mix(in_srgb,var(--accent)_8%,var(--card))]'
+                } ${isToday && !isSelected ? 'ring-1 ring-[color-mix(in_srgb,var(--accent)_50%,var(--line))]' : ''}`}
               >
                 {d}
                 {hasEntry && !isSelected && (
-                  <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-green-500" />
+                  <span className="absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[var(--ok)] shadow-[0_0_6px_var(--ok)]" />
                 )}
               </button>
             )
@@ -124,24 +139,32 @@ export default function Journal() {
         </div>
       </div>
 
-      {/* Entry editor */}
-      <div>
-        <p className="font-medium">{selectedLabel}</p>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+
+        <div className="section-rail">
+          <h2 className="eyebrow eyebrow-accent !mb-0">Entry</h2>
+        </div>
+        <p className="font-mono-metric text-base text-[var(--ink)]">{selectedLabel}</p>
+        {entryDates.has(selected) && (
+          <span className="status-pill status-pill-green mt-2">Has entry</span>
+        )}
         <textarea
           rows={12}
           placeholder="How did today go? What did you work on? Anything on your mind..."
-          className="mt-3 w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm"
+          className="input-dark mt-4 w-full px-4 py-3 text-sm"
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
         <button
           onClick={save}
           disabled={saving}
-          className="mt-3 rounded-lg bg-neutral-900 px-5 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
+          className="btn-primary mt-4"
         >
           {saving ? 'Saving...' : 'Save entry'}
         </button>
       </div>
-    </div>
+    </section>
   )
 }

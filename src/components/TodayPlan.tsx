@@ -16,13 +16,13 @@ type PlanItem = {
 }
 
 const catColor: Record<string, string> = {
-  'ramp-up': 'bg-amber-100 text-amber-800',
-  applications: 'bg-blue-100 text-blue-800',
-  outreach: 'bg-green-100 text-green-800',
-  'deep-work': 'bg-purple-100 text-purple-800',
-  learning: 'bg-indigo-100 text-indigo-800',
-  admin: 'bg-neutral-100 text-neutral-700',
-  'wind-down': 'bg-rose-100 text-rose-800',
+  'ramp-up': 'status-pill status-pill-amber',
+  applications: 'status-pill status-pill-blue',
+  outreach: 'status-pill status-pill-green',
+  'deep-work': 'status-pill status-pill-purple',
+  learning: 'status-pill status-pill-indigo',
+  admin: 'status-pill status-pill-neutral',
+  'wind-down': 'status-pill status-pill-rose',
 }
 const CATEGORIES = Object.keys(catColor)
 
@@ -222,21 +222,39 @@ export default function TodayPlan({
     (a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time)
   )
 
+  const doneCount = items.filter((i) => i.done).length
+
   return (
-    <section className="mt-6">
-      <div className="flex items-center justify-between">
-      <h2 className="eyebrow">Your plan for today</h2>
+    <section className="motion-fade-in mt-10" style={{ animationDelay: '100ms' }}>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="section-rail !mb-1">
+            <h2 className="eyebrow eyebrow-accent !mb-0">Execution</h2>
+          </div>
+          <p className="text-sm text-[var(--ink-soft)]">
+            Plan for today
+            {items.length > 0 && (
+              <span className="ml-2 font-mono-metric text-[var(--accent)]">
+                {doneCount}/{items.length}
+              </span>
+            )}
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setReplanOpen((v) => !v)}
-            className="flex items-center gap-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            className="btn-ghost !px-3 !py-1.5 !text-xs"
           >
             <Wand2 size={14} />
             Replan with AI
           </button>
           <button
             onClick={() => setAdding(true)}
-            className="flex items-center gap-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            className="btn-ghost !px-3 !py-1.5 !text-xs"
           >
             <Plus size={14} />
             Add task
@@ -245,26 +263,26 @@ export default function TodayPlan({
       </div>
 
       {replanOpen && (
-        <div className="mt-3 rounded-lg border border-neutral-300 bg-neutral-50 p-3">
+        <div className="mt-4 rounded-xl border border-[var(--line)] bg-[rgba(0,0,0,0.25)] p-3">
           <textarea
             rows={3}
             value={replanText}
             onChange={(e) => setReplanText(e.target.value)}
             placeholder="Tell me what changed. e.g. Did the first two, skipped task three for a break, no beach today, add a work block from now to 4:30 on the app."
-            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none"
+            className="input-dark w-full px-3 py-2 text-sm"
           />
           <div className="mt-2 flex items-center gap-2">
             <button
               onClick={runReplan}
               disabled={replanning}
-              className="flex items-center gap-1 rounded-lg bg-neutral-900 px-4 py-2 text-xs text-white hover:bg-neutral-700 disabled:opacity-50"
+              className="btn-primary !px-4 !py-2 !text-xs"
             >
               <Wand2 size={14} />
               {replanning ? 'Rebuilding your day...' : 'Update my plan'}
             </button>
             <button
               onClick={() => setReplanOpen(false)}
-              className="rounded-lg px-3 py-2 text-xs text-neutral-500 hover:text-neutral-700"
+              className="rounded-lg px-3 py-2 text-xs text-[var(--ink-faint)] hover:text-[var(--ink)]"
             >
               Cancel
             </button>
@@ -277,38 +295,38 @@ export default function TodayPlan({
           const isEditing = editingId === it.id
           if (isEditing) {
             return (
-              <div key={it.id} className="flex items-center gap-2 rounded-lg border border-neutral-300 px-4 py-2.5">
-                <div className="flex w-28 shrink-0 items-center gap-1 text-xs text-neutral-500">
+              <div key={it.id} className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--paper-elevated)] px-4 py-2.5">
+                <div className="flex w-28 shrink-0 items-center gap-1 text-xs text-[var(--ink-faint)]">
                   <input
                     value={draft.start_time ?? ''}
                     onChange={(e) => setDraft((d) => ({ ...d, start_time: e.target.value }))}
-                    className="w-12 rounded border border-neutral-200 bg-transparent px-1 outline-none"
+                    className="input-dark w-12 px-1"
                   />
                   <span>to</span>
                   <input
                     value={draft.end_time ?? ''}
                     onChange={(e) => setDraft((d) => ({ ...d, end_time: e.target.value }))}
-                    className="w-12 rounded border border-neutral-200 bg-transparent px-1 outline-none"
+                    className="input-dark w-12 px-1"
                   />
                 </div>
                 <input
                   value={draft.content ?? ''}
                   onChange={(e) => setDraft((d) => ({ ...d, content: e.target.value }))}
-                  className="flex-1 rounded border border-neutral-200 bg-transparent px-2 py-1 text-sm outline-none"
+                  className="input-dark flex-1 px-2 py-1 text-sm"
                 />
                 <select
                   value={draft.category ?? 'deep-work'}
                   onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
-                  className="rounded border border-neutral-200 bg-transparent px-1 py-1 text-xs outline-none"
+                  className="input-dark px-1 py-1 text-xs"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
-                <button onClick={() => saveEdit(it.id)} className="text-green-600 hover:text-green-700" title="Save">
+                <button onClick={() => saveEdit(it.id)} className="text-[var(--ok)] hover:brightness-110" title="Save">
                   <Check size={16} />
                 </button>
-                <button onClick={() => setEditingId(null)} className="text-neutral-400 hover:text-neutral-600" title="Cancel">
+                <button onClick={() => setEditingId(null)} className="text-[var(--ink-faint)] hover:text-[var(--ink)]" title="Cancel">
                   <X size={16} />
                 </button>
               </div>
@@ -317,41 +335,43 @@ export default function TodayPlan({
           return (
             <div
               key={it.id}
-              className={`group flex items-center gap-3 rounded-lg border px-4 py-2.5 ${
-                it.done ? 'border-neutral-100 bg-neutral-50' : 'border-neutral-200'
+              className={`group interactive-row flex items-center gap-3 rounded-lg border px-4 py-2.5 ${
+                it.done
+                  ? 'border-[var(--line)] bg-[var(--paper-elevated)]/50 opacity-70'
+                  : 'border-[var(--line)] bg-[var(--card)]'
               }`}
             >
               <button
                 onClick={() => toggleDone(it)}
-                className="shrink-0 text-neutral-400 hover:text-green-600"
+                className="shrink-0 text-[var(--ink-faint)] hover:text-[var(--ok)]"
                 title={it.done ? 'Mark not done' : 'Mark done'}
               >
-                {it.done ? <CheckCircle2 size={18} className="text-green-600" /> : <Circle size={18} />}
+                {it.done ? <CheckCircle2 size={18} className="text-[var(--ok)]" /> : <Circle size={18} />}
               </button>
-              <span className="w-28 shrink-0 text-xs text-neutral-500">
+              <span className="w-28 shrink-0 font-mono-metric text-xs text-[var(--ink-faint)]">
                 {it.start_time} to {it.end_time}
               </span>
               <button
                 onClick={() => startEdit(it)}
-                className={`flex-1 text-left text-sm ${it.done ? 'text-neutral-400 line-through' : ''}`}
+                className={`flex-1 text-left text-sm ${it.done ? 'text-[var(--ink-faint)] line-through' : 'text-[var(--ink)]'}`}
                 title="Click to edit"
               >
                 {it.content}
               </button>
-              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${catColor[it.category] ?? 'bg-neutral-100 text-neutral-600'}`}>
+              <span className={`shrink-0 !px-2 !py-0.5 !text-xs ${catColor[it.category] ?? 'status-pill status-pill-neutral'}`}>
                 {it.category}
               </span>
               <button
                 onClick={() => startWorking(it)}
                 disabled={starting === it.id}
-                className="flex shrink-0 items-center gap-1 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs text-white hover:bg-neutral-700 disabled:opacity-50"
+                className="btn-primary !px-3 !py-1.5 !text-xs"
               >
                 <Play size={12} />
                 {starting === it.id ? 'Starting...' : it.conversation_id ? 'Resume' : 'Start working'}
               </button>
               <button
                 onClick={() => removeItem(it.id)}
-                className="hidden shrink-0 text-neutral-400 hover:text-red-600 group-hover:block"
+                className="hidden shrink-0 text-[var(--ink-faint)] hover:text-[var(--danger)] group-hover:block"
                 title="Delete"
               >
                 <Trash2 size={14} />
@@ -361,46 +381,47 @@ export default function TodayPlan({
         })}
 
         {adding && (
-          <div className="flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-4 py-2.5">
-            <div className="flex w-28 shrink-0 items-center gap-1 text-xs text-neutral-500">
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-[var(--line)] px-4 py-2.5">
+            <div className="flex w-28 shrink-0 items-center gap-1 text-xs text-[var(--ink-faint)]">
               <input
                 value={newItem.start_time}
                 onChange={(e) => setNewItem((n) => ({ ...n, start_time: e.target.value }))}
                 placeholder="9:00 AM"
-                className="w-12 rounded border border-neutral-200 bg-transparent px-1 outline-none"
+                className="input-dark w-12 px-1"
               />
               <span>to</span>
               <input
                 value={newItem.end_time}
                 onChange={(e) => setNewItem((n) => ({ ...n, end_time: e.target.value }))}
                 placeholder="10:00 AM"
-                className="w-12 rounded border border-neutral-200 bg-transparent px-1 outline-none"
+                className="input-dark w-12 px-1"
               />
             </div>
             <input
               value={newItem.content}
               onChange={(e) => setNewItem((n) => ({ ...n, content: e.target.value }))}
               placeholder="What are you doing?"
-              className="flex-1 rounded border border-neutral-200 bg-transparent px-2 py-1 text-sm outline-none"
+              className="input-dark flex-1 px-2 py-1 text-sm"
               autoFocus
             />
             <select
               value={newItem.category}
               onChange={(e) => setNewItem((n) => ({ ...n, category: e.target.value }))}
-              className="rounded border border-neutral-200 bg-transparent px-1 py-1 text-xs outline-none"
+              className="input-dark px-1 py-1 text-xs"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <button onClick={addItem} className="text-green-600 hover:text-green-700" title="Add">
+            <button onClick={addItem} className="text-[var(--ok)] hover:brightness-110" title="Add">
               <Check size={16} />
             </button>
-            <button onClick={() => setAdding(false)} className="text-neutral-400 hover:text-neutral-600" title="Cancel">
+            <button onClick={() => setAdding(false)} className="text-[var(--ink-faint)] hover:text-[var(--ink)]" title="Cancel">
               <X size={16} />
             </button>
           </div>
         )}
+      </div>
       </div>
     </section>
   )

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Check } from 'lucide-react'
 
 type Project = {
   id: number
@@ -11,10 +11,10 @@ type Project = {
   created_at: string
 }
 
-const statusColor: Record<string, string> = {
-  Active: 'bg-green-50 text-green-700',
-  Paused: 'bg-amber-50 text-amber-700',
-  Done: 'bg-neutral-100 text-neutral-500',
+const statusPill: Record<string, string> = {
+  Active: 'status-pill status-pill-green',
+  Paused: 'status-pill status-pill-amber',
+  Done: 'status-pill status-pill-neutral',
 }
 
 export default function ProjectsList() {
@@ -50,84 +50,105 @@ export default function ProjectsList() {
   }
 
   async function remove(id: number) {
-    if (!window.confirm('Delete this project? Linked notes, leads, and applications will stay, but lose their project link.')) return
+    if (
+      !window.confirm(
+        'Delete this project? Linked notes, leads, and applications will stay, but lose their project link.'
+      )
+    )
+      return
     setProjects((prev) => prev.filter((p) => p.id !== id))
     await supabase.from('projects').delete().eq('id', id)
   }
 
-  return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between">
-        <h2 className="eyebrow">All projects</h2>
-        <button
-          onClick={() => setAdding((v) => !v)}
-          className="flex items-center gap-1 rounded-lg bg-neutral-900 px-3 py-1.5 text-sm text-white hover:bg-neutral-700"
-        >
-          <Plus size={16} />
-          New project
-        </button>
-      </div>
+  const active = projects.filter((p) => p.status === 'Active').length
+  const paused = projects.filter((p) => p.status === 'Paused').length
+  const done = projects.filter((p) => p.status === 'Done').length
 
-      {adding && (
-        <div className="card mt-3 flex gap-2 p-4">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && create()}
-            placeholder="Project name, e.g. Find a job"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none"
-            autoFocus
-          />
-          <button
-            onClick={create}
-            disabled={saving || !name.trim()}
-            className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
-          >
-            {saving ? 'Creating...' : 'Create'}
-          </button>
-          <button
-            onClick={() => {
-              setAdding(false)
-              setName('')
-            }}
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50"
-          >
-            Cancel
+  return (
+    <section className="motion-fade-in mt-8" style={{ animationDelay: '80ms' }}>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="section-rail !mb-1">
+              <h2 className="eyebrow eyebrow-accent !mb-0">All projects</h2>
+            </div>
+            <p className="text-sm text-[var(--ink-soft)]">
+              <span className="font-mono-metric text-[var(--accent)]">{projects.length}</span>
+              {' '}total
+              <span className="text-[var(--ink-faint)]">
+                {' '}· {active} active · {paused} paused · {done} done
+              </span>
+            </p>
+          </div>
+          <button onClick={() => setAdding((v) => !v)} className="btn-primary">
+            <Plus size={16} />
+            New project
           </button>
         </div>
-      )}
 
-      <div className="mt-4 space-y-2">
-        {projects.length === 0 && !adding && (
-          <p className="text-sm text-[var(--ink-soft)]">
-            No projects yet. Create one to group notes, outreach, and applications.
-          </p>
-        )}
-        {projects.map((p) => (
-          <div
-            key={p.id}
-            className="group flex items-center justify-between rounded-lg border border-[var(--line)] bg-[var(--card)] px-5 py-4"
-          >
-            <Link href={`/projects/${p.id}`} className="min-w-0 flex-1">
-              <p className="font-display text-2xl leading-tight">{p.name}</p>
-              <span
-                className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  statusColor[p.status] ?? 'bg-neutral-100 text-neutral-600'
-                }`}
-              >
-                {p.status}
-              </span>
-            </Link>
+        {adding && (
+          <div className="mt-4 flex flex-wrap gap-2 rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--accent)_6%,var(--card))] p-4">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && create()}
+              placeholder="Project name, e.g. Find a job"
+              className="input-dark min-w-[12rem] flex-1 px-3 py-2 text-sm"
+              autoFocus
+            />
             <button
-              onClick={() => remove(p.id)}
-              className="hidden shrink-0 p-2 text-neutral-400 hover:text-red-600 group-hover:block"
-              title="Delete project"
+              onClick={create}
+              disabled={saving || !name.trim()}
+              className="btn-primary !px-4 !py-2"
             >
-              <Trash2 size={16} />
+              <Check size={14} />
+              {saving ? 'Creating...' : 'Create'}
+            </button>
+            <button
+              onClick={() => {
+                setAdding(false)
+                setName('')
+              }}
+              className="btn-ghost !px-3 !py-2"
+            >
+              Cancel
             </button>
           </div>
-        ))}
+        )}
+
+        <div className="mt-5 space-y-2">
+          {projects.length === 0 && !adding && (
+            <p className="text-sm text-[var(--ink-faint)]">
+              No projects yet. Create one to group notes, outreach, and applications.
+            </p>
+          )}
+          {projects.map((p) => (
+            <div
+              key={p.id}
+              className="group interactive-row flex items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--card)] px-5 py-4"
+            >
+              <Link href={`/projects/${p.id}`} className="min-w-0 flex-1">
+                <p className="font-display text-2xl leading-tight tracking-tight text-[var(--ink)]">
+                  {p.name}
+                </p>
+                <span className={`mt-2 inline-flex ${statusPill[p.status] ?? 'status-pill status-pill-neutral'}`}>
+                  {p.status}
+                </span>
+              </Link>
+              <button
+                onClick={() => remove(p.id)}
+                className="shrink-0 p-2 text-[var(--ink-faint)] opacity-0 transition hover:text-[var(--danger)] group-hover:opacity-100"
+                title="Delete project"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

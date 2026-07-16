@@ -2,12 +2,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Plus, Trash2, Pencil, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react'
+import AmbientField from '@/components/AmbientField'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Conversation = { id: number; title: string }
 type Attachment = {
   kind: 'image' | 'pdf'
-  data: string // base64
+  data: string
   media_type: string
   name: string
 }
@@ -151,7 +152,6 @@ export default function AssistantPage() {
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
 
-    // Build the real API payload: attachment blocks first, then text, on the last message
     const apiMessages = newMessages.map((m, i) => {
       if (i === newMessages.length - 1 && attachments.length > 0) {
         const blocks = attachments.map((a) =>
@@ -195,121 +195,181 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <div className="mb-6">
-        <h1 className="font-display text-4xl">Hello Mr. Pozuelo, how can I assist you today?</h1>
-      </div>
-      <div className="flex flex-1 gap-4 overflow-hidden">
-      {/* Chat list */}
-      <div className="flex w-56 shrink-0 flex-col border-r border-neutral-200 pr-3">
-        <button
-          onClick={newChat}
-          className="flex items-center gap-2 rounded-lg bg-neutral-900 px-3 py-2 text-sm text-white hover:bg-neutral-700"
-        >
-          <Plus size={16} />
-          New chat
-        </button>
-        <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
-          {conversations.map((c) => (
-            <div
-              key={c.id}
-              className={`group flex items-center gap-1 rounded-lg pr-1 text-sm ${
-                c.id === activeId ? 'bg-neutral-200' : 'hover:bg-neutral-100'
-              }`}
-            >
-              <button
-                onClick={() => selectChat(c.id)}
-                className="flex-1 truncate px-3 py-2 text-left"
-              >
-                {c.title}
-              </button>
-              <button
-                onClick={() => renameChat(c.id)}
-                className="hidden rounded p-1 text-neutral-400 hover:text-neutral-700 group-hover:block"
-                title="Rename"
-              >
-                <Pencil size={14} />
-              </button>
-              <button
-                onClick={() => deleteChat(c.id)}
-                className="hidden rounded p-1 text-neutral-400 hover:text-red-600 group-hover:block"
-                title="Delete"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="hud-stage hud-stage-bleed">
+      <AmbientField />
+      <div className="hud-grid" aria-hidden />
+      <div className="hud-scan" aria-hidden />
 
-      {/* Conversation */}
-      <div
-        className="flex flex-1 flex-col"
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragOver(true)
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-      >
-        <div className={`flex-1 space-y-4 overflow-y-auto rounded-lg ${dragOver ? 'bg-neutral-100 ring-2 ring-neutral-300' : ''}`}>
-          {messages.length === 0 && !dragOver && (
-            <p className="text-neutral-400">Ask me anything. I am your Zoro assistant. Drop an image or PDF to have me read it.</p>
-          )}
-          {dragOver && (
-            <p className="flex h-full items-center justify-center text-neutral-500">Drop files to attach</p>
-          )}
-          {messages.map((m, i) => (
-            <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
-              <div
-                className={`inline-block max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2 text-sm ${
-                  m.role === 'user' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-800'
-                }`}
-              >
-                {m.content}
-              </div>
-            </div>
-          ))}
-          {loading && <p className="text-sm text-neutral-400">Thinking...</p>}
-          <div ref={bottomRef} />
-        </div>
+      <div className="hud-content mx-auto flex max-w-6xl flex-col" style={{ minHeight: 'calc(100vh - 2rem)' }}>
+        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-6 backdrop-blur-sm">
+          <span className="hud-corners-tr" aria-hidden />
+          <span className="hud-corners-bl" aria-hidden />
+          <div className="hero-glow opacity-50" aria-hidden />
 
-        <div className="mt-4">
-          {attachments.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-2">
-              {attachments.map((a, i) => (
-                <div key={i} className="flex items-center gap-1.5 rounded-md bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
-                  {a.kind === 'image' ? <ImageIcon size={13} /> : <FileText size={13} />}
-                  <span className="max-w-[140px] truncate">{a.name}</span>
-                  <button onClick={() => removeAttachment(i)} className="text-neutral-400 hover:text-red-600">
-                    <X size={13} />
+          <div className="relative z-[1] status-rail text-xs text-[var(--ink-soft)]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--ok)_35%,var(--line))] bg-[color-mix(in_srgb,var(--ok)_10%,transparent)] px-3 py-1 font-mono-metric tracking-wide text-[var(--ok)]">
+              <span className="live-dot" />
+              ONLINE
+            </span>
+            <span className="font-mono-metric tracking-wider text-[var(--ink-faint)]">
+              ZORO // ASSISTANT
+            </span>
+          </div>
+
+          <div className="relative z-[1] mt-4">
+            <p className="eyebrow eyebrow-accent">Personal OS</p>
+            <h1 className="hero-title mt-2 font-display text-3xl tracking-tight text-[var(--ink)] sm:text-4xl lg:text-5xl">
+              Hello Mr. Pozuelo, how can I assist you today?
+            </h1>
+            <div className="hero-title-rule mt-3" aria-hidden />
+          </div>
+        </header>
+
+        <div className="motion-fade-in mt-5 flex min-h-0 flex-1 gap-4 pb-6" style={{ animationDelay: '60ms' }}>
+          {/* Chat list */}
+          <aside className="hud-panel relative flex w-56 shrink-0 flex-col p-3 sm:w-60">
+            <span className="hud-corners-tr" aria-hidden />
+            <span className="hud-corners-bl" aria-hidden />
+            <button onClick={newChat} className="btn-primary w-full justify-center">
+              <Plus size={16} />
+              New chat
+            </button>
+            <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
+              {conversations.map((c) => (
+                <div
+                  key={c.id}
+                  className={`group flex items-center gap-0.5 rounded-lg pr-1 text-sm transition duration-[var(--dur-med)] ${
+                    c.id === activeId
+                      ? 'bg-[var(--accent-dim)] text-[var(--accent)] shadow-[0_0_16px_var(--accent-glow)]'
+                      : 'text-[var(--ink-soft)] hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  <button
+                    onClick={() => selectChat(c.id)}
+                    className="flex-1 truncate px-3 py-2 text-left"
+                  >
+                    {c.title}
+                  </button>
+                  <button
+                    onClick={() => renameChat(c.id)}
+                    className="hidden rounded p-1 text-[var(--ink-faint)] hover:text-[var(--ink)] group-hover:block"
+                    title="Rename"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={() => deleteChat(c.id)}
+                    className="hidden rounded p-1 text-[var(--ink-faint)] hover:text-[var(--danger)] group-hover:block"
+                    title="Delete"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
               ))}
             </div>
-          )}
-          <div className="flex gap-2">
-            <label className="flex cursor-pointer items-center rounded-lg border border-neutral-300 px-3 hover:bg-neutral-50" title="Attach images or PDFs">
-              <Paperclip size={18} className="text-neutral-500" />
-              <input type="file" accept="image/*,application/pdf" multiple onChange={handleFilePick} className="hidden" />
-            </label>
-            <input
-              className="flex-1 rounded-lg border border-neutral-300 px-4 py-2"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && send()}
-            />
-            <button
-              onClick={send}
-              disabled={loading}
-              className="rounded-lg bg-neutral-900 px-5 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
+          </aside>
+
+          {/* Conversation */}
+          <div
+            className="hud-panel relative flex min-w-0 flex-1 flex-col p-4"
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDragOver(true)
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <span className="hud-corners-tr" aria-hidden />
+            <span className="hud-corners-bl" aria-hidden />
+
+            <div
+              className={`flex-1 space-y-4 overflow-y-auto rounded-xl p-2 transition ${
+                dragOver
+                  ? 'bg-[var(--accent-dim)] ring-2 ring-[color-mix(in_srgb,var(--accent)_40%,transparent)]'
+                  : ''
+              }`}
             >
-              Send
-            </button>
+              {messages.length === 0 && !dragOver && (
+                <p className="px-2 text-sm text-[var(--ink-faint)]">
+                  Ask me anything. I am your Zoro assistant. Drop an image or PDF to have me read it.
+                </p>
+              )}
+              {dragOver && (
+                <p className="flex h-full items-center justify-center font-mono-metric text-sm text-[var(--accent)]">
+                  Drop files to attach
+                </p>
+              )}
+              {messages.map((m, i) => (
+                <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
+                  <div
+                    className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-xl px-4 py-2.5 text-sm ${
+                      m.role === 'user'
+                        ? 'bg-[var(--accent)] text-[#041018] shadow-[0_0_16px_var(--accent-glow)]'
+                        : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink)]'
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <p className="font-mono-metric text-sm text-[var(--accent)]">Thinking...</p>
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            <div className="mt-4">
+              {attachments.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {attachments.map((a, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--ink-soft)]"
+                    >
+                      {a.kind === 'image' ? <ImageIcon size={13} /> : <FileText size={13} />}
+                      <span className="max-w-[140px] truncate">{a.name}</span>
+                      <button
+                        onClick={() => removeAttachment(i)}
+                        className="text-[var(--ink-faint)] hover:text-[var(--danger)]"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <label
+                  className="btn-ghost cursor-pointer !px-3"
+                  title="Attach images or PDFs"
+                >
+                  <Paperclip size={18} />
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    multiple
+                    onChange={handleFilePick}
+                    className="hidden"
+                  />
+                </label>
+                <input
+                  className="input-dark flex-1 px-4 py-2 text-sm"
+                  placeholder="Type a message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && send()}
+                />
+                <button
+                  onClick={send}
+                  disabled={loading}
+                  className="btn-primary"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </div>
-          </div>
-      </div>
+        </div>
       </div>
     </div>
   )

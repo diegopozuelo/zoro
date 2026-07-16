@@ -9,12 +9,11 @@ function ymd(d: Date) {
 
 const GOALS = { work: 5, sleep: 8, exercise: 45, reading: 20 }
 
-// four nested rings, outer to inner: work, sleep, exercise, reading
 const RINGS = [
-  { key: 'work', color: '#3b82f6', r: 30 },
-  { key: 'sleep', color: '#8b5cf6', r: 23 },
-  { key: 'exercise', color: '#22c55e', r: 16 },
-  { key: 'reading', color: '#f59e0b', r: 9 },
+  { key: 'work', color: '#60A5FA', r: 30 },
+  { key: 'sleep', color: '#A78BFA', r: 23 },
+  { key: 'exercise', color: '#34D399', r: 16 },
+  { key: 'reading', color: '#FBBF24', r: 9 },
 ]
 
 type DayData = {
@@ -25,7 +24,7 @@ type DayData = {
   reading: number
 }
 
-function MiniRings({ day }: { day: DayData }) {
+function MiniRings({ day, active }: { day: DayData; active: boolean }) {
   const goals: Record<string, number> = GOALS
   const vals: Record<string, number> = {
     work: day.work,
@@ -33,34 +32,60 @@ function MiniRings({ day }: { day: DayData }) {
     exercise: day.exercise,
     reading: day.reading,
   }
+  const closed = RINGS.filter((r) => vals[r.key] >= goals[r.key]).length
+
   return (
-    <svg width="74" height="74" viewBox="0 0 74 74" className="-rotate-90">
-      {RINGS.map((ring) => {
-        const circ = 2 * Math.PI * ring.r
-        const pct = Math.min(vals[ring.key] / goals[ring.key], 1)
-        return (
-          <g key={ring.key}>
-            <circle cx="37" cy="37" r={ring.r} fill="none" stroke="#f1f1f1" strokeWidth="5" />
-            <circle
-              cx="37" cy="37" r={ring.r} fill="none" stroke={ring.color} strokeWidth="5"
-              strokeLinecap="round" strokeDasharray={circ}
-              strokeDashoffset={circ - pct * circ}
-            />
-          </g>
-        )
-      })}
-    </svg>
+    <div className="relative">
+      <svg width="74" height="74" viewBox="0 0 74 74" className="-rotate-90">
+        {RINGS.map((ring) => {
+          const circ = 2 * Math.PI * ring.r
+          const pct = Math.min(vals[ring.key] / goals[ring.key], 1)
+          return (
+            <g key={ring.key}>
+              <circle
+                cx="37"
+                cy="37"
+                r={ring.r}
+                fill="none"
+                stroke="rgba(255,255,255,0.06)"
+                strokeWidth="5"
+              />
+              <circle
+                cx="37"
+                cy="37"
+                r={ring.r}
+                fill="none"
+                stroke={ring.color}
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={circ}
+                strokeDashoffset={circ - pct * circ}
+                className="ring-progress"
+                style={{ filter: active || closed === 4 ? `drop-shadow(0 0 3px ${ring.color})` : undefined }}
+              />
+            </g>
+          )
+        })}
+      </svg>
+      {closed === 4 && (
+        <span className="absolute inset-0 flex items-center justify-center rotate-90">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--ok)] shadow-[0_0_8px_var(--ok)]" />
+        </span>
+      )}
+    </div>
   )
 }
 
 export default function WeekStrip({
+  selected,
   onSelectDay,
   refreshKey,
 }: {
+  selected: string
   onSelectDay: (date: string) => void
   refreshKey: number
 }) {
-  const [offset, setOffset] = useState(0) // 0 = ending today, -7 = previous week
+  const [offset, setOffset] = useState(0)
   const [days, setDays] = useState<DayData[]>([])
 
   useEffect(() => {
@@ -68,7 +93,6 @@ export default function WeekStrip({
   }, [offset, refreshKey])
 
   async function loadWeek() {
-    // build the 7 dates
     const dates: string[] = []
     for (let i = 6; i >= 0; i--) {
       const d = new Date()
@@ -109,43 +133,75 @@ export default function WeekStrip({
     return `${fmt(start)} to ${fmt(end)}`
   })()
 
+  const weekClosed = days.reduce((sum, day) => {
+    const hits = [
+      day.work >= GOALS.work,
+      day.sleep >= GOALS.sleep,
+      day.exercise >= GOALS.exercise,
+      day.reading >= GOALS.reading,
+    ].filter(Boolean).length
+    return sum + hits
+  }, 0)
+
   return (
-    <div className="rounded-2xl border border-neutral-200 p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-neutral-500">Weekly progress</h3>
+    <section className="hud-panel relative motion-fade-in p-5 sm:p-6" style={{ animationDelay: '60ms' }}>
+      <span className="hud-corners-tr" aria-hidden />
+      <span className="hud-corners-bl" aria-hidden />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="section-rail !mb-1">
+            <h2 className="eyebrow eyebrow-accent !mb-0">Weekly progress</h2>
+          </div>
+          <p className="text-sm text-[var(--ink-soft)]">
+            <span className="font-mono-metric text-[var(--ok)]">{weekClosed}</span>
+            <span className="text-[var(--ink-faint)]"> / 28 rings closed this week</span>
+          </p>
+        </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-400">{rangeLabel}</span>
-          <button onClick={() => setOffset(offset - 7)} className="rounded p-1 hover:bg-neutral-100">
+          <span className="font-mono-metric text-xs text-[var(--ink-faint)]">{rangeLabel}</span>
+          <button onClick={() => setOffset(offset - 7)} className="btn-ghost !p-1.5" title="Previous week">
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => setOffset(Math.min(offset + 7, 0))}
             disabled={offset === 0}
-            className="rounded p-1 hover:bg-neutral-100 disabled:opacity-30"
+            className="btn-ghost !p-1.5 disabled:opacity-30"
+            title="Next week"
           >
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-2">
+      <div className="mt-5 grid grid-cols-7 gap-2">
         {days.map((day) => {
           const d = new Date(day.date + 'T00:00:00')
           const dow = d.toLocaleDateString('en-US', { weekday: 'short' })
           const dnum = d.getDate()
+          const active = day.date === selected
+          const isToday = day.date === ymd(new Date())
           return (
             <button
               key={day.date}
               onClick={() => onSelectDay(day.date)}
-              className="flex flex-col items-center gap-1 rounded-lg p-2 hover:bg-neutral-50"
+              className={`flex flex-col items-center gap-1.5 rounded-xl border p-2 transition duration-[var(--dur-med)] ${
+                active
+                  ? 'border-[color-mix(in_srgb,var(--accent)_50%,var(--line))] bg-[var(--accent-dim)] shadow-[0_0_24px_var(--accent-glow)]'
+                  : 'border-transparent hover:border-[var(--line)] hover:bg-[color-mix(in_srgb,var(--card)_80%,transparent)]'
+              }`}
             >
-              <span className="text-xs text-neutral-400">{dow}</span>
-              <MiniRings day={day} />
-              <span className="text-xs text-neutral-500">{dnum}</span>
+              <span className={`text-[10px] uppercase tracking-wider ${isToday ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
+                {dow}
+              </span>
+              <MiniRings day={day} active={active} />
+              <span className={`font-mono-metric text-xs ${active ? 'text-[var(--accent)]' : 'text-[var(--ink-soft)]'}`}>
+                {dnum}
+              </span>
             </button>
           )
         })}
       </div>
-    </div>
+    </section>
   )
 }

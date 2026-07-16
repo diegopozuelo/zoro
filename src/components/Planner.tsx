@@ -20,13 +20,13 @@ type PlanItem = {
 }
 
 const catColor: Record<string, string> = {
-  'ramp-up': 'bg-amber-100 text-amber-800',
-  applications: 'bg-blue-100 text-blue-800',
-  outreach: 'bg-green-100 text-green-800',
-  'deep-work': 'bg-purple-100 text-purple-800',
-  learning: 'bg-indigo-100 text-indigo-800',
-  admin: 'bg-neutral-100 text-neutral-700',
-  'wind-down': 'bg-rose-100 text-rose-800',
+  'ramp-up': 'status-pill status-pill-amber',
+  applications: 'status-pill status-pill-blue',
+  outreach: 'status-pill status-pill-green',
+  'deep-work': 'status-pill status-pill-purple',
+  learning: 'status-pill status-pill-indigo',
+  admin: 'status-pill status-pill-neutral',
+  'wind-down': 'status-pill status-pill-rose',
 }
 
 export default function Planner() {
@@ -124,8 +124,6 @@ export default function Planner() {
   }
 
   async function approve() {
-    // Merge: update existing rows in place, insert new ones, delete removed ones.
-    // This keeps conversation_id and done on tasks that still exist.
     const { data: existing } = await supabase
       .from('plan_items')
       .select('id')
@@ -190,76 +188,112 @@ export default function Planner() {
     weekday: 'long', month: 'long', day: 'numeric',
   })
 
+  const doneCount = items.filter((i) => i.done).length
+
   return (
-    <div className="max-w-3xl">
-      {/* Date nav */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => shiftDay(-1)} className="rounded p-1 hover:bg-neutral-100">
-          <ChevronLeft size={18} />
-        </button>
-        <span className="font-medium">{label}</span>
-        <button onClick={() => shiftDay(1)} className="rounded p-1 hover:bg-neutral-100">
-          <ChevronRight size={18} />
-        </button>
-        {status === 'approved' && (
-          <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-            Approved
-          </span>
-        )}
+    <div className="motion-fade-in mt-8 space-y-5 pb-10" style={{ animationDelay: '80ms' }}>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => shiftDay(-1)}
+            className="btn-ghost !p-2"
+            title="Previous day"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="font-mono-metric text-base text-[var(--ink)] sm:text-lg">{label}</span>
+          <button
+            onClick={() => shiftDay(1)}
+            className="btn-ghost !p-2"
+            title="Next day"
+          >
+            <ChevronRight size={18} />
+          </button>
+          {status === 'approved' && (
+            <span className="status-pill status-pill-green">Approved</span>
+          )}
+          {status === 'draft' && items.length > 0 && (
+            <span className="status-pill status-pill-amber">Draft</span>
+          )}
+        </div>
+
+        <div className="mt-5">
+          <div className="section-rail">
+            <h2 className="eyebrow eyebrow-accent !mb-0">Brain dump</h2>
+          </div>
+          <p className="text-sm text-[var(--ink-soft)]">
+            What do you want to get done? Dump it raw and generate a plan.
+          </p>
+          <textarea
+            rows={4}
+            value={brainDump}
+            onChange={(e) => setBrainDump(e.target.value)}
+            placeholder="e.g. 10 applications, 10 outreach messages, advance Zoro, check OPT status, read science news, work on courses..."
+            className="input-dark mt-3 w-full px-4 py-3 text-sm"
+          />
+          <button
+            onClick={generate}
+            disabled={generating}
+            className="btn-primary mt-3"
+          >
+            <Sparkles size={16} />
+            {generating ? 'Building your day...' : 'Generate plan'}
+          </button>
+        </div>
       </div>
 
-      {/* Brain dump */}
-      <div className="mt-6">
-        <label className="text-sm font-medium text-neutral-500">
-          What do you want to get done? Brain-dump it.
-        </label>
-        <textarea
-          rows={4}
-          value={brainDump}
-          onChange={(e) => setBrainDump(e.target.value)}
-          placeholder="e.g. 10 applications, 10 outreach messages, advance Zoro, check OPT status, read science news, work on courses..."
-          className="mt-2 w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm"
-        />
-        <button
-          onClick={generate}
-          disabled={generating}
-          className="mt-2 flex items-center gap-2 rounded-lg bg-neutral-900 px-5 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
-        >
-          <Sparkles size={16} />
-          {generating ? 'Building your day...' : 'Generate plan'}
-        </button>
-      </div>
-
-      {/* Generated plan */}
       {items.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-neutral-500">Your plan</h2>
+        <div className="hud-panel relative p-5 sm:p-6">
+          <span className="hud-corners-tr" aria-hidden />
+          <span className="hud-corners-bl" aria-hidden />
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="section-rail !mb-1">
+                <h2 className="eyebrow eyebrow-accent !mb-0">Your plan</h2>
+              </div>
+              <p className="text-sm text-[var(--ink-soft)]">
+                <span className="font-mono-metric text-[var(--accent)]">
+                  {doneCount}/{items.length}
+                </span>
+                {' '}blocks
+              </p>
+            </div>
             <button
               onClick={approve}
-              className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700"
+              className="rounded-lg bg-[var(--ok)] px-4 py-2 text-sm font-semibold text-[#041018] shadow-[0_0_16px_color-mix(in_srgb,var(--ok)_35%,transparent)] transition hover:brightness-110"
             >
               Approve plan
             </button>
           </div>
-          <div className="mt-3 space-y-2">
+
+          <div className="mt-4 space-y-2">
             {items.map((it, i) => (
               <div
                 key={it.id ?? i}
-                className={`group flex items-center gap-3 rounded-lg border px-4 py-3 ${
-                  it.done ? 'border-neutral-100 bg-neutral-50' : 'border-neutral-200'
+                className={`group interactive-row flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 ${
+                  it.done
+                    ? 'border-[var(--line)] bg-[var(--paper-elevated)]/50 opacity-70'
+                    : 'border-[var(--line)] bg-[var(--card)]'
                 }`}
               >
                 {it.id && (
                   <button
                     onClick={() => toggleDone(i)}
-                    className="shrink-0 text-neutral-400 hover:text-green-600"
+                    className="shrink-0 text-[var(--ink-faint)] hover:text-[var(--ok)]"
                     title={it.done ? 'Mark not done' : 'Mark done'}
                   >
-                    {it.done ? <CheckCircle2 size={18} className="text-green-600" /> : <Circle size={18} />}
+                    {it.done ? (
+                      <CheckCircle2 size={18} className="text-[var(--ok)]" />
+                    ) : (
+                      <Circle size={18} />
+                    )}
                   </button>
                 )}
-                <div className="flex w-32 shrink-0 items-center gap-1 text-xs text-neutral-500">
+                <div className="flex w-32 shrink-0 items-center gap-1 font-mono-metric text-xs text-[var(--ink-faint)]">
                   <input
                     value={it.start_time}
                     onChange={(e) => updateItem(i, 'start_time', e.target.value)}
@@ -275,18 +309,18 @@ export default function Planner() {
                 <input
                   value={it.content}
                   onChange={(e) => updateItem(i, 'content', e.target.value)}
-                  className={`flex-1 bg-transparent text-sm outline-none ${
-                    it.done ? 'text-neutral-400 line-through' : ''
+                  className={`min-w-[10rem] flex-1 bg-transparent text-sm outline-none ${
+                    it.done ? 'text-[var(--ink-faint)] line-through' : 'text-[var(--ink)]'
                   }`}
                 />
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${catColor[it.category] ?? 'bg-neutral-100 text-neutral-600'}`}>
+                <span className={`shrink-0 !px-2 !py-0.5 !text-xs ${catColor[it.category] ?? 'status-pill status-pill-neutral'}`}>
                   {it.category}
                 </span>
                 {it.id && (
                   <button
                     onClick={() => startWorking(i)}
                     disabled={starting === it.id}
-                    className="flex shrink-0 items-center gap-1 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs text-white hover:bg-neutral-700 disabled:opacity-50"
+                    className="btn-primary !px-3 !py-1.5 !text-xs"
                   >
                     <Play size={12} />
                     {starting === it.id ? 'Starting...' : it.conversation_id ? 'Resume' : 'Start working'}
@@ -294,7 +328,7 @@ export default function Planner() {
                 )}
                 <button
                   onClick={() => removeItem(i)}
-                  className="hidden shrink-0 text-neutral-400 hover:text-red-600 group-hover:block"
+                  className="hidden shrink-0 text-[var(--ink-faint)] hover:text-[var(--danger)] group-hover:block"
                 >
                   <Trash2 size={14} />
                 </button>

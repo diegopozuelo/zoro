@@ -56,21 +56,29 @@ export default function TodayPriorities({
   }
 
   return (
-    <section className="mt-10">
-      <h2 className="eyebrow">Top 3 priorities</h2>
-      <div className="mt-3 space-y-2">
+    <section className="motion-fade-in mt-10" style={{ animationDelay: '160ms' }}>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
+        <div className="section-rail">
+          <h2 className="eyebrow eyebrow-accent !mb-0">Priorities</h2>
+        </div>
+        <p className="mb-4 text-sm text-[var(--ink-soft)]">
+          Three moves that matter most before the day ends.
+        </p>
+      <div className="space-y-2">
         {slots.map((s, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-3"
+            className="interactive-row flex items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--card)] px-4 py-3"
           >
             <button
               onClick={() => toggleDone(i)}
-              className="shrink-0 text-neutral-400 hover:text-green-600"
+              className="shrink-0 text-[var(--ink-faint)] hover:text-[var(--ok)]"
               title={s.done ? 'Mark not done' : 'Mark done'}
             >
               {s.done ? (
-                <CheckCircle2 size={18} className="text-green-600" />
+                <CheckCircle2 size={18} className="text-[var(--ok)]" />
               ) : (
                 <Circle size={18} />
               )}
@@ -80,12 +88,13 @@ export default function TodayPriorities({
               onChange={(e) => setContent(i, e.target.value)}
               onBlur={() => saveContent(i)}
               placeholder={`Priority ${i + 1}`}
-              className={`flex-1 bg-transparent text-sm outline-none ${
-                s.done ? 'text-neutral-400 line-through' : ''
+              className={`flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--ink-faint)] ${
+                s.done ? 'text-[var(--ink-faint)] line-through' : 'text-[var(--ink)]'
               }`}
             />
           </div>
         ))}
+      </div>
       </div>
     </section>
   )

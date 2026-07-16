@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import PipelineTable from '@/components/PipelineTable'
+import AmbientField from '@/components/AmbientField'
 
 export default async function PipelinePage() {
   const { data: rows } = await supabase
@@ -7,12 +8,44 @@ export default async function PipelinePage() {
     .select('id, company, role_title, role_type, city, status, date_applied, job_url, notes, project_id')
     .order('date_added', { ascending: false })
 
-  return (
-    <div className="max-w-6xl">
-      <h1 className="text-2xl font-semibold">Pipeline</h1>
-      <p className="mt-1 text-neutral-500">{rows?.length ?? 0} applications tracked</p>
+  const count = rows?.length ?? 0
 
-      <div className="mt-6">
+  return (
+    <div className="hud-stage hud-stage-bleed">
+      <AmbientField />
+      <div className="hud-grid" aria-hidden />
+      <div className="hud-scan" aria-hidden />
+
+      <div className="hud-content mx-auto max-w-6xl">
+        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+          <span className="hud-corners-tr" aria-hidden />
+          <span className="hud-corners-bl" aria-hidden />
+          <div className="hero-glow opacity-60" aria-hidden />
+          <div className="hero-orbit hero-orbit-c opacity-50" aria-hidden />
+
+          <div className="relative z-[1] status-rail text-xs text-[var(--ink-soft)]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--accent)_35%,var(--line))] bg-[var(--accent-dim)] px-3 py-1 font-mono-metric tracking-wide text-[var(--accent)]">
+              <span className="live-dot !bg-[var(--accent)] !shadow-[0_0_10px_var(--accent)]" />
+              TRACK
+            </span>
+            <span className="font-mono-metric tracking-wider text-[var(--ink-faint)]">
+              ZORO // PIPELINE
+            </span>
+          </div>
+
+          <div className="relative z-[1] mt-6">
+            <p className="eyebrow eyebrow-accent">Applications</p>
+            <h1 className="hero-title mt-2 font-display text-5xl tracking-tight text-[var(--ink)] sm:text-6xl">
+              Pipeline
+            </h1>
+            <div className="hero-title-rule mt-3" aria-hidden />
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--ink-soft)]">
+              <span className="font-mono-metric text-[var(--accent)]">{count}</span>
+              {' '}applications tracked. Every role, status, and touchpoint in one ops board.
+            </p>
+          </div>
+        </header>
+
         <PipelineTable initial={rows ?? []} />
       </div>
     </div>

@@ -20,13 +20,13 @@ type Row = {
 const STATUSES = ['Watchlist', 'Applied', 'Interview', 'Rejected', 'Ghosted', 'Offer']
 
 const statusStyle: Record<string, string> = {
-    Offer: 'bg-green-100 text-green-800',
-    Interview: 'bg-blue-100 text-blue-800',
-    Applied: 'bg-neutral-100 text-neutral-700',
-    Watchlist: 'bg-amber-100 text-amber-800',
-    Rejected: 'bg-red-100 text-red-700',
-    Ghosted: 'bg-neutral-100 text-neutral-400',
-  }
+  Offer: 'status-pill status-pill-green',
+  Interview: 'status-pill status-pill-blue',
+  Applied: 'status-pill status-pill-neutral',
+  Watchlist: 'status-pill status-pill-amber',
+  Rejected: 'status-pill status-pill-red',
+  Ghosted: 'status-pill status-pill-neutral',
+}
 
 const blank: Omit<Row, 'id'> = {
   company: '', role_title: '', role_type: '', city: '',
@@ -132,124 +132,132 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
   }
 
   const showForm = adding || editing !== null
+  const filtered = rows.filter((r) => {
+    const q = query.toLowerCase()
+    return (
+      r.company?.toLowerCase().includes(q) ||
+      r.role_title?.toLowerCase().includes(q) ||
+      r.status?.toLowerCase().includes(q) ||
+      r.city?.toLowerCase().includes(q)
+    )
+  })
 
   return (
-    <div>
-      <div className="mb-4 flex items-center gap-3">
-        <input
-          placeholder="Search company, role, status..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 rounded-lg border border-neutral-300 px-4 py-2 text-sm"
-        />
-        <button
-          onClick={() => setBulkOpen((v) => !v)}
-          className="whitespace-nowrap rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-        >
-          Paste list
-        </button>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700"
-        >
-          <Plus size={16} />
-          Add application
-        </button>
-      </div>
+    <section className="motion-fade-in mt-8" style={{ animationDelay: '80ms' }}>
+      <div className="hud-panel relative p-5 sm:p-6">
+        <span className="hud-corners-tr" aria-hidden />
+        <span className="hud-corners-bl" aria-hidden />
 
-      {bulkOpen && (
-        <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-          <label className="text-xs font-medium text-neutral-600">
-            Paste applications, one per line
-          </label>
-          <p className="mt-1 text-xs text-neutral-500">
-            Format: Company | Role | Location | URL | Status Date. Example: NumeralHQ | Solutions Engineer | Remote (US) | wellfound.com/... | Applied Jul 9
-          </p>
-          <textarea
-            rows={6}
-            value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
-            placeholder={'NumeralHQ | Solutions Engineer | Remote (US) | wellfound.com/company/numeralhq-1/jobs | Applied Jul 9'}
-            className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 font-mono text-xs"
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            placeholder="Search company, role, status..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="input-dark flex-1 px-4 py-2 text-sm"
           />
-          <div className="mt-2 flex gap-2">
-            <button
-              onClick={addBulk}
-              disabled={bulkSaving}
-              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
-            >
-              {bulkSaving ? 'Adding...' : 'Add all'}
-            </button>
-            <button
-              onClick={() => setBulkOpen(false)}
-              className="rounded-lg px-3 py-2 text-sm text-neutral-500 hover:text-neutral-700"
-            >
-              Cancel
-            </button>
-          </div>
+          <button
+            onClick={() => setBulkOpen((v) => !v)}
+            className="btn-ghost whitespace-nowrap"
+          >
+            Paste list
+          </button>
+          <button onClick={openAdd} className="btn-primary whitespace-nowrap">
+            <Plus size={16} />
+            Add application
+          </button>
         </div>
-      )}
 
-      <div className="overflow-x-auto rounded-lg border border-neutral-200">
-        <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-neutral-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Company</th>
-              <th className="px-4 py-3 font-medium">Role</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">City</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Applied</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-          {rows
-              .filter((r) => {
-                const q = query.toLowerCase()
-                return (
-                  r.company?.toLowerCase().includes(q) ||
-                  r.role_title?.toLowerCase().includes(q) ||
-                  r.status?.toLowerCase().includes(q) ||
-                  r.city?.toLowerCase().includes(q)
-                )
-              })
-              .map((r) => (
-              <tr key={r.id} className="border-t border-neutral-100">
-                <td className="px-4 py-3 font-medium">{r.company}</td>
-                <td className="px-4 py-3 text-neutral-700">{r.role_title}</td>
-                <td className="px-4 py-3 text-neutral-500">{r.role_type}</td>
-                <td className="px-4 py-3 text-neutral-500">{r.city}</td>
-                <td className="px-4 py-3">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[r.status] ?? 'bg-neutral-100 text-neutral-600'}`}>
-                    {r.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-neutral-500">{r.date_applied ?? ''}</td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => openEdit(r)}
-                    className="text-neutral-400 hover:text-neutral-700"
-                  >
-                    Edit
-                  </button>
-                </td>
+        {bulkOpen && (
+          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--accent)_6%,var(--card))] p-4">
+            <label className="eyebrow">Paste applications, one per line</label>
+            <p className="mt-1 text-xs text-[var(--ink-soft)]">
+              Format: Company | Role | Location | URL | Status Date. Example: NumeralHQ | Solutions Engineer | Remote (US) | wellfound.com/... | Applied Jul 9
+            </p>
+            <textarea
+              rows={6}
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder={'NumeralHQ | Solutions Engineer | Remote (US) | wellfound.com/company/numeralhq-1/jobs | Applied Jul 9'}
+              className="input-dark mt-2 w-full px-3 py-2 font-mono text-xs"
+            />
+            <div className="mt-2 flex gap-2">
+              <button onClick={addBulk} disabled={bulkSaving} className="btn-primary">
+                {bulkSaving ? 'Adding...' : 'Add all'}
+              </button>
+              <button
+                onClick={() => setBulkOpen(false)}
+                className="text-sm text-[var(--ink-faint)] hover:text-[var(--ink)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--line)]">
+          <table className="w-full text-sm">
+            <thead className="border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_70%,transparent)] text-left text-[var(--ink-faint)]">
+              <tr>
+                <th className="px-4 py-3 font-medium">Company</th>
+                <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">City</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Applied</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((r) => (
+                <tr
+                  key={r.id}
+                  className="interactive-row border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_50%,transparent)]"
+                >
+                  <td className="px-4 py-3 font-medium text-[var(--ink)]">{r.company}</td>
+                  <td className="px-4 py-3 text-[var(--ink-soft)]">{r.role_title}</td>
+                  <td className="px-4 py-3 text-[var(--ink-faint)]">{r.role_type}</td>
+                  <td className="px-4 py-3 text-[var(--ink-faint)]">{r.city}</td>
+                  <td className="px-4 py-3">
+                    <span className={statusStyle[r.status] ?? 'status-pill status-pill-neutral'}>
+                      {r.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-mono-metric text-xs text-[var(--ink-faint)]">{r.date_applied ?? ''}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => openEdit(r)}
+                      className="text-sm text-[var(--ink-faint)] transition hover:text-[var(--accent)]"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/30 p-4" onClick={close}>
-          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold">{editing ? 'Edit application' : 'Add application'}</h2>
+        <div
+          className="fixed inset-0 z-10 flex items-center justify-center bg-[color-mix(in_srgb,#041018_60%,transparent)] p-4 backdrop-blur-sm"
+          onClick={close}
+        >
+          <div
+            className="hud-panel w-full max-w-lg p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="hud-corners-tr" aria-hidden />
+            <span className="hud-corners-bl" aria-hidden />
+            <h2 className="font-display text-2xl text-[var(--ink)]">
+              {editing ? 'Edit application' : 'Add application'}
+            </h2>
             <div className="mt-4 space-y-3">
               {(['company', 'role_title', 'role_type', 'city', 'job_url'] as const).map((field) => (
                 <div key={field}>
-                  <label className="text-xs text-neutral-500">{field.replace('_', ' ')}</label>
+                  <label className="eyebrow">{field.replace('_', ' ')}</label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                    className="input-dark mt-1 w-full px-3 py-2 text-sm"
                     value={form[field] ?? ''}
                     onChange={(e) => setForm({ ...form, [field]: e.target.value })}
                   />
@@ -257,9 +265,9 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
               ))}
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-xs text-neutral-500">status</label>
+                  <label className="eyebrow">status</label>
                   <select
-                    className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                    className="input-dark mt-1 w-full px-3 py-2 text-sm"
                     value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value })}
                   >
@@ -269,45 +277,45 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs text-neutral-500">date applied</label>
+                  <label className="eyebrow">date applied</label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                    className="input-dark mt-1 w-full px-3 py-2 text-sm"
                     value={form.date_applied ?? ''}
                     onChange={(e) => setForm({ ...form, date_applied: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-neutral-500">notes</label>
+                <label className="eyebrow">notes</label>
                 <textarea
                   rows={3}
-                  className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                  className="input-dark mt-1 w-full px-3 py-2 text-sm"
                   value={form.notes ?? ''}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-xs text-neutral-500">project</label>
+                <label className="eyebrow">project</label>
                 <ProjectSelect
                   value={form.project_id ?? null}
                   onChange={(projectId) => setForm({ ...form, project_id: projectId })}
                   includeDoneIds={form.project_id ? [form.project_id] : []}
-                  className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                  className="input-dark mt-1 w-full px-3 py-2 text-sm"
                 />
               </div>
             </div>
             <div className="mt-5 flex gap-2">
-              <button onClick={save} className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-700">
+              <button onClick={save} className="btn-primary">
                 Save
               </button>
-              <button onClick={close} className="rounded-lg border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100">
+              <button onClick={close} className="btn-ghost">
                 Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }

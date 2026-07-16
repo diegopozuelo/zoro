@@ -1,18 +1,20 @@
 import type { Metadata } from 'next'
-import { Inter, Instrument_Serif } from 'next/font/google'
+import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
+import TimeTheme from '@/components/TimeTheme'
 
-const inter = Inter({
+const plexSans = IBM_Plex_Sans({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
 })
 
-const instrumentSerif = Instrument_Serif({
+const plexMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  weight: '400',
-  variable: '--font-serif',
+  weight: ['400', '500'],
+  variable: '--font-mono',
   display: 'swap',
 })
 
@@ -23,9 +25,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable}`}>
+    <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`} data-phase="night">
       <body className="antialiased">
-        <div className="flex min-h-screen">
+        <TimeTheme />
+        <div className="flex min-h-screen bg-[var(--paper)] transition-[background-color] duration-[2.4s]">
           <Sidebar />
           <main className="flex-1 p-8">{children}</main>
         </div>
