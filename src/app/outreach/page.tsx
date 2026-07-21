@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Plus, Trash2, Mail, ArrowLeft, ImagePlus, X, CheckCircle2, Clock } from 'lucide-react'
 import ProjectSelect from '@/components/ProjectSelect'
-import AmbientField from '@/components/AmbientField'
+import HudShell from '@/components/HudShell'
 
 type Lead = {
   id: number
@@ -27,17 +27,6 @@ const statusPill: Record<string, string> = {
   Messaged: 'status-pill status-pill-amber',
   Replied: 'status-pill status-pill-green',
   Archived: 'status-pill status-pill-neutral',
-}
-
-function HudShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="hud-stage hud-stage-bleed">
-      <AmbientField />
-      <div className="hud-grid" aria-hidden />
-      <div className="hud-scan" aria-hidden />
-      <div className="hud-content mx-auto max-w-6xl">{children}</div>
-    </div>
-  )
 }
 
 export default function OutreachPage() {
@@ -247,7 +236,7 @@ export default function OutreachPage() {
           Back to board
         </button>
 
-        <header className="hero-command motion-fade-in-slow relative mt-4 overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+        <header className="hero-command motion-fade-in-slow relative mt-4 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-7">
           <span className="hud-corners-tr" aria-hidden />
           <span className="hud-corners-bl" aria-hidden />
           <div className="hero-glow opacity-60" aria-hidden />
@@ -470,7 +459,7 @@ export default function OutreachPage() {
   // ---------- BOARD VIEW ----------
   return (
     <HudShell>
-      <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+      <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-7">
         <span className="hud-corners-tr" aria-hidden />
         <span className="hud-corners-bl" aria-hidden />
         <div className="hero-glow opacity-60" aria-hidden />
@@ -552,7 +541,7 @@ export default function OutreachPage() {
                     <div
                       key={lead.id}
                       onClick={() => openWorkspace(lead)}
-                      className="group relative cursor-pointer rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_90%,transparent)] p-4 transition duration-[var(--dur-med)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))] hover:shadow-[0_0_28px_var(--accent-glow)]"
+                      className="group relative cursor-pointer rounded-xl border border-[var(--line)] bg-[var(--card)] p-4 transition duration-[var(--dur-med)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))] "
                     >
                       <button
                         onClick={(e) => {

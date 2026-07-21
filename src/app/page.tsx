@@ -5,9 +5,9 @@ import TodayPriorities from '@/components/TodayPriorities'
 import TodayNotes from '@/components/TodayNotes'
 import DaySummary from '@/components/DaySummary'
 import CommandClock from '@/components/CommandClock'
-import AmbientField from '@/components/AmbientField'
 import PhaseBadge from '@/components/PhaseBadge'
 import HeroVisuals from '@/components/HeroVisuals'
+import HudShell from '@/components/HudShell'
 
 const GOALS = { work: 5, sleep: 8, exercise: 45, reading: 20 }
 
@@ -171,14 +171,9 @@ export default async function TodayPage() {
   const planTotal = (planItems ?? []).length
 
   return (
-    <div className="hud-stage hud-stage-bleed">
-      <AmbientField />
-      <div className="hud-grid" aria-hidden />
-      <div className="hud-scan" aria-hidden />
-
-      <div className="hud-content mx-auto max-w-6xl">
+    <HudShell>
       {/* Command hero */}
-      <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+      <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-7">
         <HeroVisuals />
         <span className="hud-corners-tr" aria-hidden />
         <span className="hud-corners-bl" aria-hidden />
@@ -215,20 +210,20 @@ export default async function TodayPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)]/80 px-4 py-3 backdrop-blur-sm">
+            <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3">
               <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">Plan</div>
               <div className="mt-0.5 font-mono-metric text-2xl text-[var(--ink)]">
                 {planDone}
                 <span className="text-[var(--ink-faint)]">/{planTotal || 0}</span>
               </div>
             </div>
-            <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)]/80 px-4 py-3 backdrop-blur-sm">
+            <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3">
               <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">Streak</div>
-              <div className="mt-0.5 font-mono-metric text-2xl text-[var(--accent)] drop-shadow-[0_0_12px_var(--accent-glow)]">
+              <div className="mt-0.5 font-mono-metric text-2xl text-[var(--accent)] ">
                 {streak}
               </div>
             </div>
-            <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)]/80 px-4 py-3 backdrop-blur-sm">
+            <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3">
               <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">Pipeline</div>
               <div className="mt-0.5 font-mono-metric text-2xl text-[var(--ink)]">{total}</div>
             </div>
@@ -249,17 +244,6 @@ export default async function TodayPage() {
           </div>
           <div className="mt-2 flex flex-col gap-8 sm:flex-row sm:items-center">
             <div className="relative mx-auto sm:mx-0">
-              <div
-                className="pointer-events-none absolute inset-0 rounded-full opacity-40 blur-2xl"
-                style={{
-                  background:
-                    'radial-gradient(circle, rgba(61,213,255,0.35), transparent 70%)',
-                }}
-                aria-hidden
-              />
-              <div className="ring-orbit" aria-hidden>
-                <span className="ring-orbit-dot" />
-              </div>
               <MiniRingsCard
                 work={yWork}
                 sleep={ySleep}
@@ -353,7 +337,7 @@ export default async function TodayPage() {
             <h2 className="eyebrow eyebrow-accent !mb-0">Outreach</h2>
           </div>
           <div className="mt-2 flex items-baseline gap-3">
-            <span className="font-mono-metric text-5xl text-[var(--accent)] drop-shadow-[0_0_18px_var(--accent-glow)]">
+            <span className="font-mono-metric text-5xl text-[var(--accent)] ">
               {leadTotal}
             </span>
             <span className="text-sm text-[var(--ink-soft)]">companies in play</span>
@@ -436,7 +420,6 @@ export default async function TodayPage() {
       <TodayPriorities initial={priorityRows ?? []} entryDate={todayStr} />
 
       <DaySummary date={todayStr} />
-      </div>
-    </div>
+    </HudShell>
   )
 }

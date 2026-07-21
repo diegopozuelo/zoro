@@ -166,8 +166,8 @@ export default function TodayNotes({ initial, today }: { initial: Note[]; today:
               href="/notes"
               className="group relative flex min-h-[140px] items-center justify-center"
             >
-              <div className="absolute inset-x-3 top-2 h-full rounded-xl border border-[var(--line)] bg-[var(--card)]/40" />
-              <div className="absolute inset-x-1.5 top-1 h-full rounded-xl border border-[var(--line)] bg-[var(--card)]/70" />
+              <div className="absolute inset-x-3 top-2 h-full rounded-xl border border-[var(--line)] bg-[var(--card)]" />
+              <div className="absolute inset-x-1.5 top-1 h-full rounded-xl border border-[var(--line)] bg-[var(--card)]" />
               <div className="relative flex h-full w-full flex-col items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--accent)_35%,var(--line))] bg-[var(--accent-dim)] p-4 text-center transition group-hover:shadow-[0_0_24px_var(--accent-glow)]">
                 <span className="font-mono-metric text-3xl text-[var(--accent)]">+{extra}</span>
                 <span className="mt-1 text-sm font-medium text-[var(--ink)]">

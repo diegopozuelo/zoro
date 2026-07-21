@@ -61,7 +61,6 @@ function MiniRings({ day, active }: { day: DayData; active: boolean }) {
                 strokeDasharray={circ}
                 strokeDashoffset={circ - pct * circ}
                 className="ring-progress"
-                style={{ filter: active || closed === 4 ? `drop-shadow(0 0 3px ${ring.color})` : undefined }}
               />
             </g>
           )
@@ -188,7 +187,7 @@ export default function WeekStrip({
               className={`flex flex-col items-center gap-1.5 rounded-xl border p-2 transition duration-[var(--dur-med)] ${
                 active
                   ? 'border-[color-mix(in_srgb,var(--accent)_50%,var(--line))] bg-[var(--accent-dim)] shadow-[0_0_24px_var(--accent-glow)]'
-                  : 'border-transparent hover:border-[var(--line)] hover:bg-[color-mix(in_srgb,var(--card)_80%,transparent)]'
+                  : 'border-transparent hover:border-[var(--line)] hover:bg-[var(--card)]'
               }`}
             >
               <span className={`text-[10px] uppercase tracking-wider ${isToday ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>

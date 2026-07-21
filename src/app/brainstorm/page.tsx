@@ -1,15 +1,10 @@
 import Brainstorm from '@/components/Brainstorm'
-import AmbientField from '@/components/AmbientField'
+import HudShell from '@/components/HudShell'
 
 export default function BrainstormPage() {
   return (
-    <div className="hud-stage hud-stage-bleed">
-      <AmbientField />
-      <div className="hud-grid" aria-hidden />
-      <div className="hud-scan" aria-hidden />
-
-      <div className="hud-content mx-auto max-w-6xl">
-        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+    <HudShell>
+        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-7">
           <span className="hud-corners-tr" aria-hidden />
           <span className="hud-corners-bl" aria-hidden />
           <div className="hero-glow opacity-60" aria-hidden />
@@ -38,7 +33,6 @@ export default function BrainstormPage() {
         </header>
 
         <Brainstorm />
-      </div>
-    </div>
+      </HudShell>
   )
 }

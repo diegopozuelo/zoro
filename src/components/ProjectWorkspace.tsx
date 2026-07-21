@@ -113,7 +113,7 @@ export default function ProjectWorkspace({ projectId }: { projectId: number }) {
         Back to projects
       </Link>
 
-      <header className="hero-command relative mt-4 overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+      <header className="hero-command relative mt-4 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-7">
         <span className="hud-corners-tr" aria-hidden />
         <span className="hud-corners-bl" aria-hidden />
         <div className="hero-glow opacity-50" aria-hidden />

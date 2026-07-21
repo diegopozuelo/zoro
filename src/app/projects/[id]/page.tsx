@@ -1,5 +1,5 @@
 import ProjectWorkspace from '@/components/ProjectWorkspace'
-import AmbientField from '@/components/AmbientField'
+import HudShell from '@/components/HudShell'
 
 export default async function ProjectPage({
   params,
@@ -18,13 +18,8 @@ export default async function ProjectPage({
   }
 
   return (
-    <div className="hud-stage hud-stage-bleed">
-      <AmbientField />
-      <div className="hud-grid" aria-hidden />
-      <div className="hud-scan" aria-hidden />
-      <div className="hud-content mx-auto max-w-6xl">
+    <HudShell>
         <ProjectWorkspace projectId={projectId} />
-      </div>
-    </div>
+      </HudShell>
   )
 }

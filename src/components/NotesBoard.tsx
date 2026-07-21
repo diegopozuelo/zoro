@@ -225,7 +225,7 @@ export default function NotesBoard() {
             {shown.map((n) => (
               <div
                 key={n.id}
-                className="group relative rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_90%,transparent)] p-4 transition duration-[var(--dur-med)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))] hover:shadow-[0_0_28px_var(--accent-glow)]"
+                className="group relative rounded-xl border border-[var(--line)] bg-[var(--card)] p-4 transition duration-[var(--dur-med)] [content-visibility:auto] [contain-intrinsic-size:auto_180px] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))]"
               >
                 <button
                   onClick={() => deleteNote(n.id)}

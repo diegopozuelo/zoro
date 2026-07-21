@@ -196,7 +196,7 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
 
         <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--line)]">
           <table className="w-full text-sm">
-            <thead className="border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_70%,transparent)] text-left text-[var(--ink-faint)]">
+            <thead className="border-b border-[var(--line)] bg-[var(--card)] text-left text-[var(--ink-faint)]">
               <tr>
                 <th className="px-4 py-3 font-medium">Company</th>
                 <th className="px-4 py-3 font-medium">Role</th>
@@ -211,7 +211,7 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
               {filtered.map((r) => (
                 <tr
                   key={r.id}
-                  className="interactive-row border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_50%,transparent)]"
+                  className="interactive-row border-t border-[var(--line)] bg-[var(--card)]"
                 >
                   <td className="px-4 py-3 font-medium text-[var(--ink)]">{r.company}</td>
                   <td className="px-4 py-3 text-[var(--ink-soft)]">{r.role_title}</td>
@@ -240,7 +240,7 @@ export default function PipelineTable({ initial }: { initial: Row[] }) {
 
       {showForm && (
         <div
-          className="fixed inset-0 z-10 flex items-center justify-center bg-[color-mix(in_srgb,#041018_60%,transparent)] p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-10 flex items-center justify-center bg-[color-mix(in_srgb,#041018_60%,transparent)] p-4"
           onClick={close}
         >
           <div

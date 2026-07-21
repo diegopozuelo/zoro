@@ -11,17 +11,17 @@
   --night: 1;
 
   --paper-day: #E8EEF5;
-  --paper-night: #0B0D10;
+  --paper-night: #05070A;
   --elevated-day: #F4F7FB;
-  --elevated-night: #11141A;
+  --elevated-night: #0A0D12;
   --card-day: #FFFFFF;
-  --card-night: #151922;
+  --card-night: #0C1016;
   --ink-day: #0F172A;
-  --ink-night: #E8ECF2;
+  --ink-night: #F5F7FB;
   --ink-soft-day: #475569;
-  --ink-soft-night: #9AA3B2;
+  --ink-soft-night: #C5CCD6;
   --ink-faint-day: #64748B;
-  --ink-faint-night: #6B7380;
+  --ink-faint-night: #9AA3B2;
   --accent-day: #0284C7;
   --accent-night: #3DD5FF;
   --ok-day: #059669;
@@ -45,7 +45,7 @@
   --line: color-mix(
     in srgb,
     rgba(15, 23, 42, 0.12) calc((1 - var(--night)) * 100%),
-    rgba(120, 140, 170, 0.16)
+    rgba(140, 160, 190, 0.18)
   );
   --accent-dim: color-mix(
     in srgb,
@@ -55,7 +55,7 @@
   --accent-glow: color-mix(
     in srgb,
     rgba(2, 132, 199, 0.18) calc((1 - var(--night)) * 100%),
-    rgba(61, 213, 255, 0.35)
+    rgba(61, 213, 255, 0.28)
   );
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -64,17 +64,26 @@
   --dur-ring: 600ms;
 }
 
+/* Only animate theme after first client apply (avoids gray flash) */
 html {
-  transition: --night 2.4s var(--ease-out);
+  transition: none;
+}
+
+html[data-theme-ready='1'] {
+  transition: --night 1.2s var(--ease-out);
 }
 
 html, body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+html[data-theme-ready='1'],
+html[data-theme-ready='1'] body {
   transition:
-    background-color 2.4s var(--ease-out),
-    color 2.4s var(--ease-out);
+    background-color 1.2s var(--ease-out),
+    color 1.2s var(--ease-out);
 }
 
 /* Display: tight tracking tech sans (formerly serif) */
@@ -109,9 +118,7 @@ html, body {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
   transition:
     border-color var(--dur-med) var(--ease-out),
     box-shadow var(--dur-med) var(--ease-out);
@@ -119,10 +126,7 @@ html, body {
 
 .card:hover {
   border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset,
-    0 0 28px var(--accent-glow),
-    0 10px 28px color-mix(in srgb, #000 calc(10% + var(--night) * 20%), transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, #000 calc(10% + var(--night) * 16%), transparent);
 }
 
 .surface-glow {
@@ -151,7 +155,6 @@ html, body {
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 0 20px var(--accent-glow);
-  filter: brightness(1.05);
 }
 
 .btn-primary:active {
@@ -283,13 +286,13 @@ html, body {
 /* Command center chrome */
 .hud-stage {
   position: relative;
-  isolation: isolate;
 }
 
 .hud-stage-bleed {
   margin: -2rem;
   min-height: calc(100vh);
   padding-bottom: 4rem;
+  background: var(--paper);
 }
 
 .hud-content {
@@ -298,205 +301,126 @@ html, body {
   padding: 2rem 2rem 0;
 }
 
-.hud-stage > *:not(.ambient-field):not(.hud-grid):not(.hud-scan) {
+.hud-stage > *:not(.ambient-field) {
   position: relative;
   z-index: 1;
 }
 
-.hud-grid {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  opacity: calc(0.1 + var(--night) * 0.12);
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--accent) 14%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
-}
-
+.hud-grid,
 .hud-scan {
-  pointer-events: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 40%;
-  z-index: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    color-mix(in srgb, var(--accent) calc(8% + var(--night) * 6%), transparent),
-    transparent
-  );
-  animation: scanSweep 9s linear infinite;
-  opacity: calc(0.35 + var(--night) * 0.4);
+  display: none;
 }
 
 .hud-stage::before {
-  content: '';
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 55% 40% at 12% 8%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
-    radial-gradient(ellipse 45% 35% at 88% 18%, color-mix(in srgb, #8B5CF6 calc(10% + var(--night) * 16%), transparent), transparent 65%),
-    radial-gradient(ellipse 50% 40% at 50% 55%, color-mix(in srgb, #10B981 calc(6% + var(--night) * 8%), transparent), transparent 70%),
-    radial-gradient(ellipse 60% 35% at 30% 88%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
-  animation: driftA 18s var(--ease-out) infinite;
-  opacity: calc(0.4 + var(--night) * 0.4);
+  display: none;
 }
 
-/* Ambient second brain field */
+/* Ambient: absolute, scrolls with page. Paused while scrolling. */
 .ambient-field {
   pointer-events: none;
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  contain: paint;
 }
 
-.ambient-canvas {
+.ambient-glow {
+  position: absolute;
+  border-radius: 9999px;
+}
+
+.ambient-glow-a {
+  width: min(30rem, 60vw);
+  height: min(30rem, 60vw);
+  left: 6%;
+  top: 4%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
+  animation: driftA 20s ease-in-out infinite;
+  opacity: calc(0.4 + var(--night) * 0.15);
+}
+
+.ambient-glow-b {
+  width: min(24rem, 50vw);
+  height: min(24rem, 50vw);
+  right: 2%;
+  top: 18%;
+  background: radial-gradient(circle, color-mix(in srgb, #8B5CF6 calc(10% + var(--night) * 8%), transparent), transparent 70%);
+  animation: driftB 26s ease-in-out infinite;
+  opacity: calc(0.25 + var(--night) * 0.12);
+}
+
+.ambient-waves {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  opacity: 1;
+  opacity: calc(0.45 + var(--night) * 0.2);
 }
 
-.ambient-canvas-flow {
-  opacity: 1;
-  mix-blend-mode: normal;
+.ambient-wave-group path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.ambient-color-probe {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  color: var(--accent);
-  pointer-events: none;
+.ambient-wave-group-a path {
+  opacity: 0.32;
 }
 
-.ambient-spot {
-  position: absolute;
-  width: min(36rem, 70vw);
-  height: min(36rem, 70vw);
-  left: var(--spot-x, 50%);
-  top: var(--spot-y, 30%);
-  translate: -50% -50%;
-  border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--accent) calc(22% + var(--night) * 16%), transparent),
-    color-mix(in srgb, #8B5CF6 calc(6% + var(--night) * 10%), transparent) 42%,
-    transparent 68%
-  );
-  opacity: calc(0.55 + var(--night) * 0.35);
-  filter: blur(2px);
-  will-change: left, top;
+.ambient-wave-group-b path {
+  opacity: 0.18;
+  stroke-width: 1;
 }
 
-.ambient-mesh {
-  position: absolute;
-  inset: 0;
-  opacity: calc(0.14 + var(--night) * 0.18);
-  background:
-    radial-gradient(ellipse 40% 30% at 20% 30%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
-    radial-gradient(ellipse 35% 28% at 80% 45%, color-mix(in srgb, #8B5CF6 calc(6% + var(--night) * 10%), transparent), transparent 70%),
-    radial-gradient(ellipse 45% 32% at 55% 78%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%);
-  animation: driftB 24s ease-in-out infinite;
+.ambient-wave-group-a {
+  animation: waveDriftA 18s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.ambient-orb {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(40px);
-  opacity: calc(0.12 + var(--night) * 0.2);
+.ambient-wave-group-b {
+  animation: waveDriftB 24s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.ambient-orb-a {
-  width: 18rem;
-  height: 18rem;
-  left: 8%;
-  top: 6%;
-  background: color-mix(in srgb, var(--accent) 45%, transparent);
-  animation: driftA 16s ease-in-out infinite;
+@keyframes waveDriftA {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-20px, -10px, 0); }
 }
 
-.ambient-orb-b {
-  width: 14rem;
-  height: 14rem;
-  right: 6%;
-  top: 18%;
-  background: color-mix(in srgb, #8B5CF6 calc(35% + var(--night) * 20%), transparent);
-  animation: driftB 20s ease-in-out infinite;
+@keyframes waveDriftB {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(18px, 8px, 0); }
 }
 
-.ambient-orb-c {
-  width: 16rem;
-  height: 16rem;
-  left: 42%;
-  top: 48%;
-  background: color-mix(in srgb, #10B981 calc(22% + var(--night) * 10%), transparent);
-  animation: driftA 22s ease-in-out infinite reverse;
+.ambient-mesh,
+.ambient-orb,
+.ambient-orbit,
+.ambient-spot,
+.ambient-canvas,
+.ambient-color-probe,
+.ambient-scanline,
+.ambient-diagonal {
+  display: none;
 }
 
-.ambient-orb-d {
-  width: 20rem;
-  height: 20rem;
-  right: 18%;
-  bottom: 4%;
-  background: color-mix(in srgb, var(--accent) 32%, transparent);
-  animation: driftB 26s ease-in-out infinite reverse;
-}
-
-.ambient-orbit {
-  position: absolute;
-  border-radius: 9999px;
-  border: 1px dashed color-mix(in srgb, var(--accent) calc(22% + var(--night) * 20%), transparent);
-  animation: ringOrbit linear infinite;
-  opacity: calc(0.28 + var(--night) * 0.32);
-}
-
-.ambient-orbit-1 {
-  top: 10%;
-  left: 70%;
-  width: 130px;
-  height: 130px;
-  animation-duration: 28s;
-}
-
-.ambient-orbit-2 {
-  top: 42%;
-  left: 8%;
-  width: 170px;
-  height: 170px;
-  animation-duration: 40s;
-  animation-direction: reverse;
-}
-
-.ambient-orbit-3 {
-  top: 72%;
-  left: 76%;
-  width: 110px;
-  height: 110px;
-  animation-duration: 22s;
-}
-
-.ambient-orbit-dot {
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  margin-left: -3px;
-  border-radius: 9999px;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent-glow);
+/* Freeze decorative motion during scroll */
+html[data-scrolling='1'] .ambient-glow,
+html[data-scrolling='1'] .ambient-wave-group,
+html[data-scrolling='1'] .hero-glow,
+html[data-scrolling='1'] .hero-orbit,
+html[data-scrolling='1'] .hero-eq span,
+html[data-scrolling='1'] .hero-title-rule,
+html[data-scrolling='1'] .hero-sweep,
+html[data-scrolling='1'] .ring-orbit,
+html[data-scrolling='1'] .live-dot,
+html[data-scrolling='1'] .life-breath,
+html[data-scrolling='1'] .life-pulse-meter span {
+  animation-play-state: paused !important;
 }
 
 @keyframes nodePulse {
@@ -553,28 +477,21 @@ html, body {
 
 .hud-panel {
   position: relative;
-  background: color-mix(in srgb, var(--card) 92%, transparent);
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--ink) calc((1 - var(--night)) * 3%), transparent) inset,
-    0 20px 50px color-mix(in srgb, #000 calc(12% + var(--night) * 28%), transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 calc(10% + var(--night) * 18%), transparent);
   overflow: hidden;
-  backdrop-filter: blur(8px);
   transition:
-    background-color 2.4s var(--ease-out),
     border-color var(--dur-med) var(--ease-out),
-    box-shadow var(--dur-med) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
+    box-shadow var(--dur-med) var(--ease-out);
 }
 
 .hud-panel:hover {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent) inset,
-    0 0 36px var(--accent-glow),
-    0 22px 50px color-mix(in srgb, #000 calc(12% + var(--night) * 28%), transparent);
-  transform: translateY(-2px);
+    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset,
+    0 10px 28px color-mix(in srgb, #000 calc(12% + var(--night) * 20%), transparent);
 }
 
 .hud-panel::before,
@@ -631,14 +548,12 @@ html, body {
   position: relative;
   border-radius: 14px;
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--card) 90%, transparent);
+  background: var(--card);
   padding: 1.1rem 1.25rem;
   overflow: hidden;
   transition:
     border-color var(--dur-med) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-med) var(--ease-out),
-    background-color 2.4s var(--ease-out);
+    box-shadow var(--dur-med) var(--ease-out);
 }
 
 .metric-tile:hover {
@@ -677,11 +592,20 @@ html, body {
   transform: translateX(2px);
 }
 
-/* Hero command block */
+/* Hero command block — solid fill, no blur (blur tanks GPU with animated bg) */
 .hero-command {
+  background: var(--card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent) inset,
     0 18px 40px color-mix(in srgb, #000 calc(8% + var(--night) * 22%), transparent);
+}
+
+.hero-stat {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--card) !important;
 }
 
 .hero-visuals {
@@ -699,9 +623,9 @@ html, body {
   left: 8%;
   top: 10%;
   border-radius: 9999px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 70%);
-  filter: blur(8px);
-  animation: heroPulse 4.5s ease-in-out infinite;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 24%, transparent), transparent 70%);
+  animation: heroPulse 5s ease-in-out infinite;
+  opacity: 0.9;
 }
 
 .hero-orbit {
@@ -716,8 +640,8 @@ html, body {
   height: 160px;
   left: 12%;
   top: 28%;
-  animation-duration: 18s;
-  opacity: 0.7;
+  animation-duration: 28s;
+  opacity: 0.55;
 }
 
 .hero-orbit-b {
@@ -725,9 +649,9 @@ html, body {
   height: 220px;
   left: 6%;
   top: 16%;
-  animation-duration: 32s;
+  animation-duration: 42s;
   animation-direction: reverse;
-  opacity: 0.45;
+  opacity: 0.35;
 }
 
 .hero-orbit-c {
@@ -735,8 +659,8 @@ html, body {
   height: 90px;
   right: 18%;
   top: 22%;
-  animation-duration: 14s;
-  opacity: 0.55;
+  animation-duration: 24s;
+  opacity: 0.4;
   border-style: solid;
   border-width: 1px;
   border-color: color-mix(in srgb, var(--accent) 35%, transparent);
@@ -759,15 +683,15 @@ html, body {
   left: 0;
   right: 0;
   top: 0;
-  height: 45%;
+  height: 40%;
   background: linear-gradient(
     to bottom,
     transparent,
-    color-mix(in srgb, var(--accent) 14%, transparent),
+    color-mix(in srgb, var(--accent) 12%, transparent),
     transparent
   );
-  animation: scanSweep 5.5s linear infinite;
-  opacity: 0.7;
+  animation: scanSweep 7s linear infinite;
+  opacity: 0.55;
 }
 
 .hero-eq {
@@ -783,11 +707,13 @@ html, body {
 
 .hero-eq span {
   width: 3px;
+  height: 35%;
   min-height: 4px;
   border-radius: 9999px;
   background: linear-gradient(to top, transparent, var(--accent));
   box-shadow: 0 0 8px var(--accent-glow);
-  transition: height 120ms linear;
+  animation: heroEqPulse 1.4s ease-in-out infinite;
+  transform-origin: bottom center;
 }
 
 .hero-ticker {
@@ -820,6 +746,7 @@ html, body {
   height: 2px;
   background: linear-gradient(90deg, var(--accent), transparent);
   box-shadow: 0 0 12px var(--accent-glow);
+  transform-origin: left center;
   animation: heroRule 2.8s ease-in-out infinite;
 }
 
@@ -836,9 +763,14 @@ html, body {
   50% { opacity: 0.85; transform: scale(1.08); }
 }
 
+@keyframes heroEqPulse {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.55; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
 @keyframes heroRule {
-  0%, 100% { width: 5.5rem; opacity: 0.55; }
-  50% { width: 10rem; opacity: 1; }
+  0%, 100% { transform: scaleX(0.7); opacity: 0.55; }
+  50% { transform: scaleX(1.25); opacity: 1; }
 }
 
 @keyframes heroTickerIn {
@@ -860,7 +792,7 @@ html, body {
     transparent 70%
   );
   animation: lifeBreathe 5.5s ease-in-out infinite;
-  filter: blur(6px);
+  opacity: 0.75;
 }
 
 .life-orbit {
@@ -964,6 +896,10 @@ html, body {
   .hud-stage::before,
   .hud-scan,
   .live-dot,
+  .ambient-glow,
+  .ambient-scanline,
+  .ambient-wave-group,
+  .ambient-diagonal,
   .ambient-orb,
   .ambient-mesh,
   .ambient-orbit,
@@ -974,6 +910,7 @@ html, body {
   .hero-rule,
   .hero-title-rule,
   .hero-ticker-text,
+  .hero-eq span,
   .life-breath,
   .life-pulse-meter span {
     animation: none;

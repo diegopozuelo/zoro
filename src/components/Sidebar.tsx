@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, User, KanbanSquare, MessageSquare,
+  LayoutDashboard, User, KanbanSquare, MessageSquare, Sparkles,
   Send, CalendarCheck, NotebookPen, Lightbulb, Activity, StickyNote, FolderKanban,
 } from 'lucide-react'
 
@@ -12,6 +12,7 @@ const nav = [
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
+  { href: '/fresh-batch', label: 'Fresh Batch', icon: Sparkles },
   { href: '/assistant', label: 'Assistant', icon: MessageSquare },
   { href: '/outreach', label: 'Outreach', icon: Send },
   { href: '/planner', label: 'Planner', icon: CalendarCheck },
@@ -23,7 +24,7 @@ const nav = [
 export default function Sidebar() {
   const pathname = usePathname()
   return (
-    <aside className="flex w-60 shrink-0 flex-col gap-1 border-r border-[var(--line)] bg-[var(--paper-elevated)] p-4">
+    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col gap-1 overflow-y-auto border-r border-[var(--line)] bg-[var(--paper-elevated)] p-4">
       <div className="px-3 py-4">
         <span className="font-display text-lg tracking-tight text-[var(--ink)]">Zoro</span>
         <p className="mt-0.5 text-xs text-[var(--ink-faint)]">DP Second Brain</p>

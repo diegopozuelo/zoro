@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Plus, Trash2, Pencil, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react'
-import AmbientField from '@/components/AmbientField'
+import HudShell from '@/components/HudShell'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Conversation = { id: number; title: string }
@@ -195,13 +195,8 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="hud-stage hud-stage-bleed">
-      <AmbientField />
-      <div className="hud-grid" aria-hidden />
-      <div className="hud-scan" aria-hidden />
-
-      <div className="hud-content mx-auto flex max-w-6xl flex-col" style={{ minHeight: 'calc(100vh - 2rem)' }}>
-        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-6 backdrop-blur-sm">
+    <HudShell>
+        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-6">
           <span className="hud-corners-tr" aria-hidden />
           <span className="hud-corners-bl" aria-hidden />
           <div className="hero-glow opacity-50" aria-hidden />
@@ -225,7 +220,7 @@ export default function AssistantPage() {
           </div>
         </header>
 
-        <div className="motion-fade-in mt-5 flex min-h-0 flex-1 gap-4 pb-6" style={{ animationDelay: '60ms' }}>
+        <div className="motion-fade-in mt-5 flex min-h-0 flex-1 gap-4 pb-6" style={{ animationDelay: '60ms', minHeight: 'calc(100vh - 14rem)' }}>
           {/* Chat list */}
           <aside className="hud-panel relative flex w-56 shrink-0 flex-col p-3 sm:w-60">
             <span className="hud-corners-tr" aria-hidden />
@@ -370,7 +365,6 @@ export default function AssistantPage() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </HudShell>
   )
 }

@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 import LifeTracker from '@/components/LifeTracker'
 import WeekStrip from '@/components/WeekStrip'
-import AmbientField from '@/components/AmbientField'
 import LifeHeroVisuals from '@/components/LifeHeroVisuals'
+import HudShell from '@/components/HudShell'
 import { supabase } from '@/lib/supabase'
 
 function ymd(d: Date) {
@@ -84,13 +84,8 @@ export default function LifePage() {
   })
 
   return (
-    <div className="hud-stage hud-stage-bleed">
-      <AmbientField />
-      <div className="hud-grid" aria-hidden />
-      <div className="hud-scan" aria-hidden />
-
-      <div className="hud-content mx-auto max-w-6xl pb-12">
-        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--card)_55%,transparent)] p-5 sm:p-7 backdrop-blur-sm">
+    <HudShell>
+        <header className="hero-command motion-fade-in-slow relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-7">
           <LifeHeroVisuals />
           <span className="hud-corners-tr" aria-hidden />
           <span className="hud-corners-bl" aria-hidden />
@@ -118,19 +113,19 @@ export default function LifePage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)]/80 px-4 py-3 backdrop-blur-sm">
+              <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">Streak</div>
-                <div className="mt-0.5 font-mono-metric text-2xl text-[var(--ok)] drop-shadow-[0_0_12px_color-mix(in_srgb,var(--ok)_40%,transparent)]">
+                <div className="mt-0.5 font-mono-metric text-2xl text-[var(--ok)]">
                   {streak}
                 </div>
               </div>
-              <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)]/80 px-4 py-3 backdrop-blur-sm">
+              <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">Vitality</div>
-                <div className="mt-0.5 font-mono-metric text-2xl text-[var(--accent)] drop-shadow-[0_0_12px_var(--accent-glow)]">
+                <div className="mt-0.5 font-mono-metric text-2xl text-[var(--accent)]">
                   {todayVitality}%
                 </div>
               </div>
-              <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)]/80 px-4 py-3 backdrop-blur-sm">
+              <div className="hero-stat interactive-row rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">Week rings</div>
                 <div className="mt-0.5 font-mono-metric text-2xl text-[var(--ink)]">
                   {weekHits}
@@ -145,7 +140,7 @@ export default function LifePage() {
           Editing <span className="text-[var(--accent)]">{selectedLabel}</span>
         </p>
 
-        <div className="mt-3 space-y-5">
+        <div className="mt-3 space-y-5 pb-12">
           <WeekStrip
             selected={selected}
             onSelectDay={setSelected}
@@ -156,7 +151,6 @@ export default function LifePage() {
             onSaved={() => setRefreshKey((k) => k + 1)}
           />
         </div>
-      </div>
-    </div>
+    </HudShell>
   )
 }

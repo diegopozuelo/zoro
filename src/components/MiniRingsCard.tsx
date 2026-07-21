@@ -41,17 +41,6 @@ export default function MiniRingsCard({
       className="-rotate-90 shrink-0"
       aria-hidden
     >
-      <defs>
-        {RINGS.map((ring) => (
-          <filter key={`glow-${ring.key}`} id={`ring-glow-${ring.key}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        ))}
-      </defs>
       {RINGS.map((ring) => {
         const circ = 2 * Math.PI * ring.r
         const pct = goals[ring.key] > 0 ? vals[ring.key] / goals[ring.key] : 0
@@ -79,7 +68,6 @@ export default function MiniRingsCard({
               strokeLinecap="round"
               strokeDasharray={circ}
               strokeDashoffset={baseOffset}
-              filter={`url(#ring-glow-${ring.key})`}
               className="ring-progress"
               style={{ color: ring.glow }}
             />
@@ -94,7 +82,6 @@ export default function MiniRingsCard({
                 strokeLinecap="round"
                 strokeDasharray={circ}
                 strokeDashoffset={overOffset}
-                filter={`url(#ring-glow-${ring.key})`}
                 className="ring-progress"
               />
             )}

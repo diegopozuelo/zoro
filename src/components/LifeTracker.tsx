@@ -48,26 +48,12 @@ function Ring({
   return (
     <div className="flex flex-col items-center">
       <div className="relative flex h-[130px] w-[130px] items-center justify-center">
-        <div
-          className="pointer-events-none absolute inset-0 rounded-full opacity-30 blur-xl"
-          style={{ background: `radial-gradient(circle, ${colors.glow}55, transparent 70%)` }}
-          aria-hidden
-        />
         {hit && (
           <div className="ring-orbit life-ring-orbit" aria-hidden>
             <span className="ring-orbit-dot" />
           </div>
         )}
         <svg width="130" height="130" className="relative -rotate-90" aria-hidden>
-          <defs>
-            <filter id={`life-glow-${kind}`} x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
           <circle
             cx="65"
             cy="65"
@@ -86,7 +72,6 @@ function Ring({
             strokeLinecap="round"
             strokeDasharray={circ}
             strokeDashoffset={baseOffset}
-            filter={`url(#life-glow-${kind})`}
             className="ring-progress"
           />
           {over > 0 && (
@@ -100,7 +85,6 @@ function Ring({
               strokeLinecap="round"
               strokeDasharray={circ}
               strokeDashoffset={overOffset}
-              filter={`url(#life-glow-${kind})`}
               className="ring-progress"
             />
           )}
